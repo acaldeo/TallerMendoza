@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado del Taller - Turnos</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Estilos personalizados -->
+    <link href="css/styles.css" rel="stylesheet">
+    
+    <!-- Vue.js 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-light">
+    <div id="app">
+        <!-- Header -->
+        <nav class="navbar navbar-dark bg-primary mb-4">
+            <div class="container">
+                <span class="navbar-brand mb-0 h1">
+                    <i class="bi bi-wrench"></i>
+                    Estado del Taller
+                </span>
+                <div class="auto-refresh-indicator">
+                    <small class="text-white-50">
+                        <span v-if="showForm" class="badge bg-warning text-dark me-2">
+                            <i class="bi bi-pause-fill"></i> Auto-refresh pausado
+                        </span>
+                        <span v-else-if="refreshing" class="me-2">
+                            <i class="bi bi-arrow-clockwise" style="animation: spin 1s linear infinite;"></i>
+                        </span>
+                        Última actualización: {{ formatTime(lastUpdate) }}
+                    </small>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Loading -->
+            <div v-if="loading && !estado" class="text-center py-5">
+                <div class="loading-spinner"></div>
+                <p class="mt-3 text-muted">Cargando estado del taller...</p>
+            </div>
+
+            <!-- Error -->
+            <div v-if="error" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                {{ error }}
+                <button @click="cargarEstado" class="btn btn-outline-danger btn-sm ms-2">
+                    Reintentar
+                </button>
+            </div>
+
+            <!-- Success Message -->
+            <div v-if="successMessage" class="alert alert-success alert-dismissible" role="alert">
+                <i class="bi bi-check-circle"></i>
+                {{ successMessage }}
+                <button type="button" class="btn-close" @click="successMessage = ''"></button>
+            </div>
+
+            <!-- Estado del taller -->
+            <div v-if="estado && !loading">
+                <!-- Info del taller -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h2 class="card-title">{{ estado.taller }}</h2>
+                                <p class="card-text text-muted">
+                                    Capacidad: {{ estado.capacidad }} turnos simultáneos
+                                </p>
+                                <button 
+                                    @click="toggleForm" 
+                                    class="btn btn-primary btn-lg"
+                                    :disabled="loading || creatingTurno"
+                                >
+                                    <i class="bi bi-plus-circle"></i>
+                                    {{ showForm ? 'Cancelar' : 'Pedir Turno' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de turno -->
+                <div v-if="showForm" class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-person-plus"></i>
+                                    Solicitar Nuevo Turno
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form @submit.prevent="crearTurno">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="nombreCliente" class="form-label">Nombre Completo *</label>
+                                            <input 
+                                                type="text" 
+                                                class="form-control" 
+                                                id="nombreCliente"
+                                                v-model="turnoForm.nombreCliente"
+                                                required
+                                                minlength="2"
+                                                :disabled="creatingTurno"
+                                                placeholder="Ej: Juan Pérez"
+                                            >
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="telefono" class="form-label">Teléfono *</label>
+                                            <input 
+                                                type="tel" 
+                                                class="form-control" 
+                                                id="telefono"
+                                                v-model="turnoForm.telefono"
+                                                required
+                                                pattern="[0-9]{8,15}"
+                                                :disabled="creatingTurno"
+                                                placeholder="Ej: 1234567890"
+                                            >
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="modeloVehiculo" class="form-label">Modelo del Vehículo *</label>
+                                            <input 
+                                                type="text" 
+                                                class="form-control" 
+                                                id="modeloVehiculo"
+                                                v-model="turnoForm.modeloVehiculo"
+                                                required
+                                                :disabled="creatingTurno"
+                                                placeholder="Ej: Toyota Corolla 2020"
+                                            >
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="descripcionProblema" class="form-label">Descripción del Problema</label>
+                                            <textarea 
+                                                class="form-control" 
+                                                id="descripcionProblema"
+                                                v-model="turnoForm.descripcionProblema"
+                                                rows="3"
+                                                maxlength="255"
+                                                :disabled="creatingTurno"
+                                                placeholder="Describe brevemente el problema (opcional)"
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button 
+                                            type="button" 
+                                            @click="toggleForm" 
+                                            class="btn btn-secondary"
+                                            :disabled="creatingTurno"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button 
+                                            type="submit" 
+                                            class="btn btn-success"
+                                            :disabled="creatingTurno"
+                                        >
+                                            <span v-if="creatingTurno" class="loading-spinner me-2"></span>
+                                            <i v-else class="bi bi-check-circle me-2"></i>
+                                            {{ creatingTurno ? 'Creando...' : 'Crear Turno' }}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Turnos en taller -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3 class="text-success mb-3">
+                            <i class="bi bi-gear-fill"></i>
+                            En Taller ({{ estado.enTaller.length }})
+                        </h3>
+                        
+                        <div v-if="estado.enTaller.length === 0" class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            No hay turnos siendo atendidos actualmente
+                        </div>
+                        
+                        <div v-else class="row">
+                            <div v-for="turno in estado.enTaller" :key="turno.numeroTurno" 
+                                 class="col-md-4 col-sm-6 mb-3">
+                                <div class="card turno-card turno-en-taller h-100">
+                                    <div class="card-body text-center">
+                                        <div class="numero-turno text-success">
+                                            {{ turno.numeroTurno }}
+                                        </div>
+                                        <span class="badge estado-badge bg-success">
+                                            EN TALLER
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Turnos en espera -->
+                <div class="row">
+                    <div class="col-12">
+                        <h3 class="text-danger mb-3">
+                            <i class="bi bi-clock-fill"></i>
+                            En Espera ({{ estado.enEspera.length }})
+                        </h3>
+                        
+                        <div v-if="estado.enEspera.length === 0" class="alert alert-success">
+                            <i class="bi bi-check-circle"></i>
+                            No hay turnos en espera
+                        </div>
+                        
+                        <div v-else class="row">
+                            <div v-for="turno in estado.enEspera" :key="turno.numeroTurno" 
+                                 class="col-md-4 col-sm-6 mb-3">
+                                <div class="card turno-card turno-en-espera h-100">
+                                    <div class="card-body text-center">
+                                        <div class="numero-turno text-danger">
+                                            {{ turno.numeroTurno }}
+                                        </div>
+                                        <span class="badge estado-badge bg-danger">
+                                            EN ESPERA
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="mt-5 py-4 text-center text-muted">
+                <small>
+                    Sistema de Gestión de Turnos - Actualización automática cada 8 segundos
+                </small>
+            </footer>
+        </div>
+        
+        <!-- Modal de Éxito -->
+        <div v-if="showSuccessModal" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            ¡Turno Creado Exitosamente!
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center py-4">
+                        <div class="mb-4">
+                            <div class="display-1 text-success mb-3">
+                                <i class="bi bi-ticket-perforated"></i>
+                            </div>
+                            <h2 class="text-success mb-3">Turno #{{ turnoCreado?.numeroTurno }}</h2>
+                            <div class="alert alert-info">
+                                <h5 class="mb-2">
+                                    <span class="badge" :class="getEstadoBadgeClass(turnoCreado?.estado)">
+                                        {{ turnoCreado?.estado }}
+                                    </span>
+                                </h5>
+                                <p class="mb-0">
+                                    <span v-if="turnoCreado?.estado === 'EN_TALLER'">
+                                        <i class="bi bi-gear-fill text-success"></i>
+                                        Tu turno está siendo atendido ahora
+                                    </span>
+                                    <span v-else>
+                                        <i class="bi bi-clock-fill text-warning"></i>
+                                        Tu turno está en espera. Serás atendido próximamente.
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-muted">
+                            <small>
+                                <i class="bi bi-info-circle"></i>
+                                Puedes consultar el estado en tiempo real en esta pantalla
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button 
+                            type="button" 
+                            class="btn btn-success btn-lg w-100" 
+                            @click="cerrarModalExito"
+                        >
+                            <i class="bi bi-check2"></i>
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- API Service -->
+    <script src="js/api.js"></script>
+    
+    <!-- Vue App -->
+    <script src="js/cliente.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+/* Estilos personalizados para el sistema de turnos */
+
+:root {
+    --color-en-taller: #28a745;
+    --color-en-espera: #dc3545;
+    --color-finalizado: #6c757d;
+}
+
+.turno-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.turno-en-taller {
+    border-left-color: var(--color-en-taller);
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.turno-en-espera {
+    border-left-color: var(--color-en-espera);
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.turno-finalizado {
+    border-left-color: var(--color-finalizado);
+    background-color: rgba(108, 117, 125, 0.1);
+}
+
+.numero-turno {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.estado-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,.3);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.bi-arrow-clockwise {
+    display: inline-block;
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.5s;
+}
+
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+}
+
+.auto-refresh-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
+
+.form-floating {
+    position: relative;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+.card-header {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 123, 255, 0.2);
+}
+
+.alert {
+    border-radius: 0.5rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Modal de éxito */
+.modal {
+    z-index: 1050;
+}
+
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+.display-1 {
+    font-size: 4rem;
+}
+
+@media (max-width: 576px) {
+    .display-1 {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .numero-turno {
+        font-size: 2rem;
+    }
+    
+    .container {
+        padding: 0 10px;
+    }
+}

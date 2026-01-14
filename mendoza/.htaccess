@@ -1,0 +1,10 @@
+# Servir archivos HTML como estáticos
+<Files "*.html">
+    SetHandler default-handler
+</Files>
+
+# Permitir acceso a archivos estáticos
+<FilesMatch "\.(html|css|js|png|jpg|jpeg|gif|ico|svg)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Vue.js</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <h1>{{ message }}</h1>
+        <p>API Status: {{ apiStatus }}</p>
+        <button @click="testApi">Test API</button>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+        
+        createApp({
+            setup() {
+                const message = ref('Vue.js funcionando!');
+                const apiStatus = ref('No probado');
+                
+                const testApi = async () => {
+                    try {
+                        const response = await fetch('/taller/tallerApi/api/v1/taller/1/estado');
+                        const data = await response.json();
+                        apiStatus.value = data.success ? 'API OK' : 'API Error: ' + data.error;
+                    } catch (error) {
+                        apiStatus.value = 'Error: ' + error.message;
+                    }
+                };
+                
+                return {
+                    message,
+                    apiStatus,
+                    testApi
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
