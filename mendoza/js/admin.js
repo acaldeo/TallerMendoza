@@ -38,6 +38,8 @@ createApp({
         const showEmailForm = ref(false);
         // Reactive state for selected user in password form
         const selectedUser = ref(null);
+        // Reactive state for turnos filters
+        const filtroPatente = ref('');
 
         // Reactive form data for login
         const loginForm = reactive({
@@ -97,8 +99,8 @@ createApp({
             error.value = null;
         };
 
-        // Function to load turnos from API
-        const cargarTurnos = async () => {
+        // Function to load turnos from API with optional filters
+        const cargarTurnos = async (filtros = {}) => {
             // Exit if no user is logged in
             if (!user.value) return;
 
@@ -106,8 +108,8 @@ createApp({
                 // Set loading state and clear errors
                 loading.value = true;
                 error.value = null;
-                // Fetch turnos for the user's taller
-                const data = await api.listarTurnos(user.value.tallerId);
+                // Fetch turnos for the user's taller with filters
+                const data = await api.listarTurnos(user.value.tallerId, filtros);
                 // Update turnos list
                 turnos.value = data.turnos;
             } catch (err) {
@@ -327,6 +329,21 @@ createApp({
             errorEmail.value = null;
         };
 
+        // Function to apply filters to turnos
+        const aplicarFiltros = async () => {
+            const filtros = {};
+            if (filtroPatente.value.trim()) {
+                filtros.patente = filtroPatente.value.trim();
+            }
+            await cargarTurnos(filtros);
+        };
+
+        // Function to clear filters
+        const limpiarFiltros = async () => {
+            filtroPatente.value = '';
+            await cargarTurnos();
+        };
+
         // === EMAIL CONFIGURATION ===
         
         const cargarConfiguracionEmail = async () => {
@@ -375,6 +392,9 @@ createApp({
             }
         };
 
+        // Watch for changes in filtroPatente to apply filters
+        Vue.watch(filtroPatente, aplicarFiltros);
+
         // Lifecycle hook to run on component mount
         onMounted(() => {
             // Check for active session by attempting to load turnos
@@ -405,6 +425,7 @@ createApp({
             loginForm,
             userForm,
             passwordForm,
+            filtroPatente,
             isLoggedIn,
             login,
             logout,
@@ -417,6 +438,8 @@ createApp({
             eliminarUsuario,
             abrirFormPassword,
             cerrarFormularios,
+            aplicarFiltros,
+            limpiarFiltros,
             guardarConfiguracionEmail,
             probarEmail,
             getEstadoClass,

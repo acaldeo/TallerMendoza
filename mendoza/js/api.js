@@ -62,9 +62,13 @@ class ApiService {
         });
     }
 
-    // List all turnos for a taller
-    async listarTurnos(tallerId) {
-        return this.request(`/api/v1/admin/taller/${tallerId}/turnos`);
+    // List all turnos for a taller with optional filters
+    async listarTurnos(tallerId, filtros = {}) {
+        const params = new URLSearchParams();
+        if (filtros.patente) params.append('patente', filtros.patente);
+        const query = params.toString();
+        const endpoint = `/api/v1/admin/taller/${tallerId}/turnos${query ? '?' + query : ''}`;
+        return this.request(endpoint);
     }
 
     // Finalize a turno

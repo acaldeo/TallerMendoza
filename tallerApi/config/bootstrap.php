@@ -39,9 +39,10 @@ $entityManager = new EntityManager($connection, $config);
 
 // Auto-creation/update of tables based on entities
 // This reads entities and automatically creates/updates the DB schema
-$schemaTool = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
-$classes = $entityManager->getMetadataFactory()->getAllMetadata();
-$schemaTool->updateSchema($classes);
+// Commented out to avoid issues with existing data
+// $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
+// $classes = $entityManager->getMetadataFactory()->getAllMetadata();
+// $schemaTool->updateSchema($classes);
 
 // Make EntityManager available globally for the entire application
 $GLOBALS['entityManager'] = $entityManager;

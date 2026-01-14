@@ -13,7 +13,7 @@ class TurnoValidator
     /**
      * Validates turno creation data.
      *
-     * Checks required fields: nombreCliente (min 2 chars), telefono (8-15 digits), modeloVehiculo.
+     * Checks required fields: nombreCliente (min 2 chars), telefono (8-15 digits), modeloVehiculo, patente.
      * Optional field: descripcionProblema (max 255 chars if present).
      *
      * @param array $data The input data for turno creation.
@@ -36,6 +36,11 @@ class TurnoValidator
         // Validate modeloVehiculo: must be present and not empty
         if (empty($data['modeloVehiculo'])) {
             $errors[] = 'Vehicle model is required';
+        }
+
+        // Validate patente: must be present and not empty
+        if (empty($data['patente'])) {
+            $errors[] = 'Vehicle license plate is required';
         }
 
         // Validate descripcionProblema: if present, must not exceed 255 characters

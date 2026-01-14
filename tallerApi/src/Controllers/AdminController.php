@@ -83,7 +83,7 @@ class AdminController
     // === TURN MANAGEMENT ===
 
     /**
-     * Lists all turns for a specific workshop after verifying access.
+     * Lists turns for a specific workshop with optional filtering after verifying access.
      * @param int $tallerId The ID of the workshop
      * @return void
      */
@@ -93,8 +93,14 @@ class AdminController
             // Verify that the user has access to the workshop
             AuthMiddleware::requireTallerAccess($tallerId);
 
-            // Retrieve turns for the workshop
-            $turnos = $this->turnoService->listarTurnosTaller($tallerId);
+            // Get filters from query parameters
+            $filtros = [];
+            if (isset($_GET['patente'])) {
+                $filtros['patente'] = $_GET['patente'];
+            }
+
+            // Retrieve turns for the workshop with filters
+            $turnos = $this->turnoService->listarTurnosTaller($tallerId, $filtros);
 
             // Return success response with turns data
             ApiResponse::success(['turnos' => $turnos]);

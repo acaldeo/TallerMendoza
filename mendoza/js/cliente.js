@@ -31,6 +31,7 @@ createApp({
             nombreCliente: '',
             telefono: '',
             modeloVehiculo: '',
+            patente: '',
             descripcionProblema: ''
         });
 

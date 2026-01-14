@@ -69,6 +69,7 @@ class TurnoService
                   ->setNombreCliente($datos['nombreCliente'])
                   ->setTelefono($datos['telefono'])
                   ->setModeloVehiculo($datos['modeloVehiculo'])
+                  ->setPatente($datos['patente'])
                   ->setDescripcionProblema($datos['descripcionProblema']);
 
             // Check if appointment can go directly to workshop based on capacity
@@ -212,16 +213,17 @@ class TurnoService
     }
 
     /**
-     * Lists all appointments for a specific workshop.
+     * Lists appointments for a specific workshop with optional filtering.
      *
-     * Retrieves and formats all appointments associated with the given workshop,
-     * including detailed information and formatted dates.
+     * Retrieves and formats appointments associated with the given workshop,
+     * with options to filter by state or license plate.
      *
      * @param int $tallerId The ID of the workshop whose appointments to list.
+     * @param array $filtros Optional filters: 'estado' (default excludes FINALIZADO), 'patente'.
      * @return array Array of appointment data arrays, each containing full appointment details.
      * @throws Exception If the workshop is not found.
      */
-    public function listarTurnosTaller(int $tallerId): array
+    public function listarTurnosTaller(int $tallerId, array $filtros = []): array
     {
         // Find the workshop entity
         $taller = $this->em->find(Taller::class, $tallerId);
@@ -229,12 +231,27 @@ class TurnoService
             throw new Exception('Workshop not found');
         }
 
-        // Query all appointments for this workshop
-        $turnos = $this->em->createQuery(
-            'SELECT t FROM App\Entities\Turno t
-             WHERE t.taller = :taller
-             ORDER BY t.numeroTurno ASC'
-        )->setParameter('taller', $taller)->getResult();
+        // Build query with filters
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('t')
+           ->from('App\Entities\Turno', 't')
+           ->where('t.taller = :taller')
+           ->setParameter('taller', $taller)
+           ->orderBy('t.numeroTurno', 'ASC');
+
+        // If patente is provided, show all states, else exclude FINALIZADO
+        if (!isset($filtros['patente']) || empty($filtros['patente'])) {
+            $qb->andWhere('t.estado != :finalizado')
+               ->setParameter('finalizado', Turno::ESTADO_FINALIZADO);
+        }
+
+        // Filter by patente if provided
+        if (isset($filtros['patente']) && !empty($filtros['patente'])) {
+            $qb->andWhere('t.patente LIKE :patente')
+               ->setParameter('patente', '%' . $filtros['patente'] . '%');
+        }
+
+        $turnos = $qb->getQuery()->getResult();
 
         // Format appointment data for response
         return array_map(function(Turno $turno) {
@@ -244,6 +261,7 @@ class TurnoService
                 'nombreCliente' => $turno->getNombreCliente(),
                 'telefono' => $turno->getTelefono(),
                 'modeloVehiculo' => $turno->getModeloVehiculo(),
+                'patente' => $turno->getPatente(),
                 'descripcionProblema' => $turno->getDescripcionProblema(),
                 'estado' => $turno->getEstado(),
                 'fechaCreacion' => $turno->getFechaCreacion()->format('Y-m-d H:i:s'),

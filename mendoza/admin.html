@@ -93,8 +93,8 @@
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h2>Panel Administrativo</h2>
-                            <button 
-                                @click="activeTab === 'turnos' ? cargarTurnos() : cargarUsuarios()" 
+                            <button
+                                @click="activeTab === 'turnos' ? cargarTurnos() : cargarUsuarios()"
                                 class="btn btn-outline-primary"
                                 :disabled="loading"
                             >
@@ -102,6 +102,31 @@
                                 <i v-else class="bi bi-arrow-clockwise"></i>
                                 Actualizar
                             </button>
+                        </div>
+
+                        <!-- Filters for turnos -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="filtroPatente" class="form-label">Filtrar por Patente</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="filtroPatente"
+                                    v-model="filtroPatente"
+                                    placeholder="Ingrese patente..."
+                                    :disabled="loading"
+                                >
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button
+                                    @click="limpiarFiltros"
+                                    class="btn btn-outline-secondary"
+                                    :disabled="loading"
+                                >
+                                    <i class="bi bi-x-circle"></i>
+                                    Limpiar Filtros
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Tabs -->
@@ -160,6 +185,7 @@
                                         <th>Cliente</th>
                                         <th>Teléfono</th>
                                         <th>Vehículo</th>
+                                        <th>Patente</th>
                                         <th>Problema</th>
                                         <th>Estado</th>
                                         <th>Creado</th>
@@ -180,6 +206,7 @@
                                             </a>
                                         </td>
                                         <td>{{ turno.modeloVehiculo }}</td>
+                                        <td>{{ turno.patente }}</td>
                                         <td>
                                             <span 
                                                 :title="turno.descripcionProblema"

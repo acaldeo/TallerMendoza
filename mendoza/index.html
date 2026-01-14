@@ -125,11 +125,11 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3">
+                                        <div class="col-md-4 mb-3">
                                             <label for="modeloVehiculo" class="form-label">Modelo del Vehículo *</label>
-                                            <input 
-                                                type="text" 
-                                                class="form-control" 
+                                            <input
+                                                type="text"
+                                                class="form-control"
                                                 id="modeloVehiculo"
                                                 v-model="turnoForm.modeloVehiculo"
                                                 required
@@ -137,10 +137,23 @@
                                                 placeholder="Ej: Toyota Corolla 2020"
                                             >
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="patente" class="form-label">Patente del Vehículo *</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="patente"
+                                                v-model="turnoForm.patente"
+                                                required
+                                                maxlength="10"
+                                                :disabled="creatingTurno"
+                                                placeholder="Ej: ABC123"
+                                            >
+                                        </div>
+                                        <div class="col-md-4 mb-3">
                                             <label for="descripcionProblema" class="form-label">Descripción del Problema</label>
-                                            <textarea 
-                                                class="form-control" 
+                                            <textarea
+                                                class="form-control"
                                                 id="descripcionProblema"
                                                 v-model="turnoForm.descripcionProblema"
                                                 rows="3"

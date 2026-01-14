@@ -8,7 +8,6 @@ use DateTime;
 #[ORM\Table(name: 'turnos')]
 #[ORM\Index(name: 'idx_taller_estado', columns: ['taller_id', 'estado'])]
 #[ORM\Index(name: 'idx_taller_numero', columns: ['taller_id', 'numeroTurno'])]
-#[ORM\UniqueConstraint(name: 'unique_taller_numero', columns: ['taller_id', 'numeroTurno'])]
 /**
  * Entity representing a turn (appointment) in a workshop.
  * Manages turn details including client info, vehicle, problem description, and status.
@@ -62,10 +61,17 @@ class Turno
 
     /**
      * The model of the vehicle for this turn.
-     * Stored as a string with max length 255.
-     */
-    #[ORM\Column(type: 'string', length: 255)]
-    private string $modeloVehiculo;
+      * Stored as a string with max length 255.
+      */
+     #[ORM\Column(type: 'string', length: 255)]
+     private string $modeloVehiculo;
+
+     /**
+      * The license plate of the vehicle for this turn.
+      * Stored as a string with max length 10.
+      */
+     #[ORM\Column(type: 'string', length: 10, nullable: true)]
+     private ?string $patente;
 
     /**
      * Description of the problem with the vehicle.
@@ -229,6 +235,28 @@ class Turno
     public function setModeloVehiculo(string $modeloVehiculo): self
     {
         $this->modeloVehiculo = $modeloVehiculo;
+        return $this;
+    }
+
+    /**
+     * Gets the vehicle license plate.
+     *
+     * @return string|null The license plate.
+     */
+    public function getPatente(): ?string
+    {
+        return $this->patente;
+    }
+
+    /**
+     * Sets the vehicle license plate.
+     *
+     * @param string|null $patente The license plate.
+     * @return self Returns the instance for method chaining.
+     */
+    public function setPatente(?string $patente): self
+    {
+        $this->patente = $patente;
         return $this;
     }
 
