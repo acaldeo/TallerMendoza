@@ -11,8 +11,8 @@ createApp({
         const usuarios = ref([]);
         // Reactive state for email configuration
         const emailConfig = reactive({
-            smtpHost: 'smtp.gmail.com',
-            smtpPort: 587,
+            smtpHost: 'smtp.hostinger.com',
+            smtpPort: 465,
             smtpUsuario: '',
             smtpPassword: '',
             emailOrigen: '',

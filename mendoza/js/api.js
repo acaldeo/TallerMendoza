@@ -137,4 +137,12 @@ class ApiService {
             body: JSON.stringify(data)
         });
     }
+
+    // Create a new taller
+    async crearTaller(tallerData) {
+        return this.request('/api/v1/admin/talleres', {
+            method: 'POST',
+            body: JSON.stringify(tallerData)
+        });
+    }
 }

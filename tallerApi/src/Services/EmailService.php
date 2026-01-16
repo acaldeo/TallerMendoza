@@ -1,7 +1,7 @@
 <?php
 /**
  * Servicio EmailService
- * 
+ *
  * Maneja el envío de notificaciones por email.
  * Usa la configuración SMTP almacenada en la base de datos.
  */
@@ -11,6 +11,8 @@ namespace App\Services;
 use App\Entities\ConfiguracionEmail;
 use App\Entities\Turno;
 use Doctrine\ORM\EntityManager;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class EmailService
 {
@@ -95,23 +97,38 @@ class EmailService
     }
 
     /**
-     * Envía el email usando PHP mail()
+     * Envía el email usando PHPMailer con SMTP
      */
     private function enviarEmail(ConfiguracionEmail $config, string $asunto, string $mensaje): bool
     {
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            "From: {$config->getNombreOrigen()} <{$config->getEmailOrigen()}>",
-            "Reply-To: {$config->getEmailOrigen()}",
-            'X-Mailer: PHP/' . phpversion()
-        ];
+        $mail = new PHPMailer(true);
 
-        return mail(
-            $config->getEmailDestino(),
-            $asunto,
-            $mensaje,
-            implode("\r\n", $headers)
-        );
+        try {
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host = $config->getSmtpHost();
+            $mail->SMTPAuth = true;
+            $mail->Username = $config->getSmtpUsuario();
+            $mail->Password = $config->getSmtpPassword();
+            $mail->SMTPSecure = $config->getSmtpPort() == 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = $config->getSmtpPort();
+
+            // Configuración del remitente y destinatario
+            $mail->setFrom($config->getEmailOrigen(), $config->getNombreOrigen());
+            $mail->addAddress($config->getEmailDestino());
+            $mail->addReplyTo($config->getEmailOrigen(), $config->getNombreOrigen());
+
+            // Contenido del email
+            $mail->isHTML(true);
+            $mail->Subject = $asunto;
+            $mail->Body = $mensaje;
+            $mail->CharSet = 'UTF-8';
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("Error enviando email: " . $mail->ErrorInfo);
+            return false;
+        }
     }
 }

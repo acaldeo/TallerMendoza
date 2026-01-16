@@ -521,7 +521,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="emailDestino" class="form-label">Dirección de Email</label>
+                                        <label for="emailDestino" class="form-label">Email de Destino</label>
                                         <input
                                             type="email"
                                             class="form-control"
@@ -529,6 +529,34 @@
                                             v-model="emailConfig.emailDestino"
                                             :disabled="loadingEmail"
                                             placeholder="ejemplo@email.com"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="emailOrigen" class="form-label">Email de Origen</label>
+                                        <input
+                                            type="email"
+                                            class="form-control"
+                                            id="emailOrigen"
+                                            v-model="emailConfig.emailOrigen"
+                                            :disabled="loadingEmail"
+                                            placeholder="remitente@email.com"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="nombreOrigen" class="form-label">Nombre del Remitente</label>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="nombreOrigen"
+                                            v-model="emailConfig.nombreOrigen"
+                                            :disabled="loadingEmail"
+                                            placeholder="Taller Mendoza"
                                         >
                                     </div>
                                 </div>

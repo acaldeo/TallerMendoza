@@ -34,15 +34,29 @@ class ConfiguracionEmail
      * The email address to send notifications to.
      * Stored as a string with maximum length of 255 characters.
      */
-    #[ORM\Column(type: 'string', length: 255)]
-    private string $email;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $emailDestino = null;
+
+    /**
+     * The email address to send from.
+     * Stored as a string with maximum length of 255 characters.
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $emailOrigen = null;
+
+    /**
+     * The name to send from.
+     * Stored as a string with maximum length of 255 characters.
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $nombreOrigen = null;
 
     /**
      * Flag to enable or disable notifications.
-     * Defaults to true.
+     * Defaults to false.
      */
     #[ORM\Column(type: 'boolean')]
-    private bool $enabled = true;
+    private bool $activo = false;
 
     /**
      * The SMTP server host.
@@ -63,7 +77,7 @@ class ConfiguracionEmail
      * Nullable, stored as a string with maximum length of 255 characters.
      */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $smtpUsername = null;
+    private ?string $smtpUsuario = null;
 
     /**
      * The SMTP password.
@@ -140,46 +154,90 @@ class ConfiguracionEmail
     }
 
     /**
-     * Gets the email address.
+     * Gets the destination email address.
      *
-     * @return string The email address.
+     * @return string|null The email address.
      */
-    public function getEmail(): string
+    public function getEmailDestino(): ?string
     {
-        return $this->email;
+        return $this->emailDestino;
     }
 
     /**
-     * Sets the email address.
+     * Sets the destination email address.
      *
-     * @param string $email The email address.
+     * @param string|null $emailDestino The email address.
      * @return self Returns the instance for method chaining.
      */
-    public function setEmail(string $email): self
+    public function setEmailDestino(?string $emailDestino): self
     {
-        $this->email = $email;
+        $this->emailDestino = $emailDestino;
         return $this;
     }
 
     /**
-     * Gets the enabled flag.
+     * Gets the origin email address.
      *
-     * @return bool True if notifications are enabled, false otherwise.
+     * @return string|null The email address.
      */
-    public function isEnabled(): bool
+    public function getEmailOrigen(): ?string
     {
-        return $this->enabled;
+        return $this->emailOrigen;
     }
 
     /**
-     * Sets the enabled flag.
+     * Sets the origin email address.
      *
-     * @param bool $enabled The enabled flag.
+     * @param string|null $emailOrigen The email address.
      * @return self Returns the instance for method chaining.
      */
-    public function setEnabled(bool $enabled): self
+    public function setEmailOrigen(?string $emailOrigen): self
     {
-        $this->enabled = $enabled;
+        $this->emailOrigen = $emailOrigen;
+        return $this;
+    }
+
+    /**
+     * Gets the origin name.
+     *
+     * @return string|null The name.
+     */
+    public function getNombreOrigen(): ?string
+    {
+        return $this->nombreOrigen;
+    }
+
+    /**
+     * Sets the origin name.
+     *
+     * @param string|null $nombreOrigen The name.
+     * @return self Returns the instance for method chaining.
+     */
+    public function setNombreOrigen(?string $nombreOrigen): self
+    {
+        $this->nombreOrigen = $nombreOrigen;
+        return $this;
+    }
+
+    /**
+     * Gets the active flag.
+     *
+     * @return bool True if notifications are active, false otherwise.
+     */
+    public function isActivo(): bool
+    {
+        return $this->activo;
+    }
+
+    /**
+     * Sets the active flag.
+     *
+     * @param bool $activo The active flag.
+     * @return self Returns the instance for method chaining.
+     */
+    public function setActivo(bool $activo): self
+    {
+        $this->activo = $activo;
         return $this;
     }
 
@@ -232,20 +290,20 @@ class ConfiguracionEmail
      *
      * @return string|null The SMTP username, or null if not set.
      */
-    public function getSmtpUsername(): ?string
+    public function getSmtpUsuario(): ?string
     {
-        return $this->smtpUsername;
+        return $this->smtpUsuario;
     }
 
     /**
      * Sets the SMTP username.
      *
-     * @param string|null $smtpUsername The SMTP username.
+     * @param string|null $smtpUsuario The SMTP username.
      * @return self Returns the instance for method chaining.
      */
-    public function setSmtpUsername(?string $smtpUsername): self
+    public function setSmtpUsuario(?string $smtpUsuario): self
     {
-        $this->smtpUsername = $smtpUsername;
+        $this->smtpUsuario = $smtpUsuario;
         return $this;
     }
 

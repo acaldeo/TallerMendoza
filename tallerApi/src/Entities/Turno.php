@@ -9,21 +9,21 @@ use DateTime;
 #[ORM\Index(name: 'idx_taller_estado', columns: ['taller_id', 'estado'])]
 #[ORM\Index(name: 'idx_taller_numero', columns: ['taller_id', 'numeroTurno'])]
 /**
- * Entity representing a turn (appointment) in a workshop.
- * Manages turn details including client info, vehicle, problem description, and status.
+ * Entidad que representa un turno (cita) en un taller.
+ * Gestiona los detalles del turno incluyendo información del cliente, vehículo, descripción del problema y estado.
  */
 class Turno
 {
     /**
-     * Constants defining the possible states of a turn.
+     * Constantes que definen los posibles estados de un turno.
      */
     public const ESTADO_EN_TALLER = 'EN_TALLER';
     public const ESTADO_EN_ESPERA = 'EN_ESPERA';
     public const ESTADO_FINALIZADO = 'FINALIZADO';
 
     /**
-     * The unique identifier for the turn.
-     * Auto-generated primary key.
+     * El identificador único del turno.
+     * Clave primaria generada automáticamente.
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -31,23 +31,23 @@ class Turno
     private int $id;
 
     /**
-     * The workshop associated with this turn.
-     * Many-to-one relationship with Taller entity, cannot be null.
+     * El taller asociado con este turno.
+     * Relación muchos-a-uno con la entidad Taller, no puede ser nula.
      */
     #[ORM\ManyToOne(targetEntity: Taller::class, inversedBy: 'turnos')]
     #[ORM\JoinColumn(nullable: false)]
     private Taller $taller;
 
     /**
-     * The turn number within the workshop.
-     * Unique per workshop.
+     * El número de turno dentro del taller.
+     * Único por taller.
      */
     #[ORM\Column(type: 'integer')]
     private int $numeroTurno;
 
     /**
-     * The name of the client for this turn.
-     * Stored as a string with max length 255.
+     * El nombre del cliente para este turno.
+     * Almacenado como cadena con longitud máxima de 255.
      */
     #[ORM\Column(type: 'string', length: 255)]
     private string $nombreCliente;

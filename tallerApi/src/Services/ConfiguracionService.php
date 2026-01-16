@@ -1,7 +1,7 @@
 <?php
 /**
  * Servicio ConfiguracionService
- * 
+ *
  * Maneja la configuración de email para notificaciones.
  */
 
@@ -10,6 +10,8 @@ namespace App\Services;
 use App\Entities\ConfiguracionEmail;
 use App\Entities\Taller;
 use Doctrine\ORM\EntityManager;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use Exception;
 
 class ConfiguracionService
@@ -71,8 +73,8 @@ class ConfiguracionService
             $config->setTaller($taller);
         }
 
-        $config->setSmtpHost($datos['smtpHost'] ?? 'smtp.gmail.com')
-               ->setSmtpPort($datos['smtpPort'] ?? 587)
+        $config->setSmtpHost($datos['smtpHost'] ?? 'smtp.hostinger.com')
+                ->setSmtpPort($datos['smtpPort'] ?? 465)
                ->setSmtpUsuario($datos['smtpUsuario'] ?? '')
                ->setEmailOrigen($datos['emailOrigen'] ?? '')
                ->setNombreOrigen($datos['nombreOrigen'] ?? '')
@@ -115,18 +117,34 @@ class ConfiguracionService
         </body>
         </html>";
 
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            "From: {$config->getNombreOrigen()} <{$config->getEmailOrigen()}>",
-            'X-Mailer: PHP/' . phpversion()
-        ];
+        $mail = new PHPMailer(true);
 
-        return mail(
-            $config->getEmailDestino(),
-            $asunto,
-            $mensaje,
-            implode("\r\n", $headers)
-        );
+        try {
+            // Configuración del servidor SMTP
+            $mail->isSMTP();
+            $mail->Host = $config->getSmtpHost();
+            $mail->SMTPAuth = true;
+            $mail->Username = $config->getSmtpUsuario();
+            $mail->Password = $config->getSmtpPassword();
+            $mail->SMTPSecure = $config->getSmtpPort() == 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = $config->getSmtpPort();
+
+            // Configuración del remitente y destinatario
+            $mail->setFrom($config->getEmailOrigen(), $config->getNombreOrigen());
+            $mail->addAddress($config->getEmailDestino());
+            $mail->addReplyTo($config->getEmailOrigen(), $config->getNombreOrigen());
+
+            // Contenido del email
+            $mail->isHTML(true);
+            $mail->Subject = $asunto;
+            $mail->Body = $mensaje;
+            $mail->CharSet = 'UTF-8';
+
+            $mail->send();
+            return true;
+        } catch (PHPMailerException $e) {
+            error_log("Error enviando email de prueba: " . $mail->ErrorInfo);
+            return false;
+        }
     }
 }

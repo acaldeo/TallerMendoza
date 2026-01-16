@@ -37,7 +37,13 @@ $requestMethod = $_SERVER['REQUEST_METHOD'];
 
 // Parse the path and remove prefix if exists
 $path = parse_url($requestUri, PHP_URL_PATH);
-$path = preg_replace('#^/taller/tallerApi#', '', $path);
+// Remove any prefix before /api/ to make it work in different deployment paths
+if (strpos($path, '/api/') !== 0) {
+    $pos = strpos($path, '/api/');
+    if ($pos !== false) {
+        $path = substr($path, $pos);
+    }
+}
 
 // Route the request based on path and method
 try {
@@ -129,6 +135,12 @@ try {
             $controller = new AdminController();
             $controller->probarConfiguracionEmail($tallerId);
         }
+    } elseif ($path === '/api/v1/admin/talleres' && $requestMethod === 'POST') {
+        // Require authentication
+        AuthMiddleware::requireAuth();
+        // Create a new taller
+        $controller = new AdminController();
+        $controller->crearTaller();
     } else {
         // Endpoint not found
         ApiResponse::error('Endpoint no encontrado', 404);

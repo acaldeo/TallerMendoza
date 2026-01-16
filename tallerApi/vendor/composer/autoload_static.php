@@ -38,6 +38,7 @@ class ComposerStaticInitb5b6738a896b3ce410e18b72f22c7f38
             'Psr\\Log\\' => 8,
             'Psr\\Container\\' => 14,
             'Psr\\Cache\\' => 10,
+            'PHPMailer\\PHPMailer\\' => 20,
         ),
         'D' =>
         array (
@@ -119,6 +120,10 @@ class ComposerStaticInitb5b6738a896b3ce410e18b72f22c7f38
         'Psr\\Cache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
+        ),
+        'PHPMailer\\PHPMailer\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
         ),
         'Doctrine\\Persistence\\' =>
         array (
