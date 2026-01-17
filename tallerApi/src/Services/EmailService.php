@@ -87,6 +87,11 @@ class EmailService
                 </div>
                 
                 <div style='text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;'>
+                    <a href='https://tallermendoza.com/mendoza/admin.html'
+                       style='background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-bottom: 20px;'>
+                        Ir a Panel de Administración
+                    </a>
+                    <br>
                     <small style='color: #6c757d;'>
                         Sistema de Gestión de Turnos - Notificación automática
                     </small>
