@@ -44,14 +44,6 @@
                 <p class="mt-3 text-muted">Cargando estado del taller...</p>
             </div>
 
-            <!-- Error -->
-            <div v-if="error" class="alert alert-danger" role="alert">
-                <i class="bi bi-exclamation-triangle"></i>
-                {{ error }}
-                <button @click="cargarEstado" class="btn btn-outline-danger btn-sm ms-2">
-                    Reintentar
-                </button>
-            </div>
 
             <!-- Success Message -->
             <div v-if="successMessage" class="alert alert-success alert-dismissible" role="alert">
@@ -188,7 +180,14 @@
                         </div>
                     </div>
                 </div>
-
+                 <!-- Error -->
+            <div v-if="error" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                {{ error }}
+                <button @click="cargarEstado" class="btn btn-outline-danger btn-sm ms-2">
+                    Reintentar
+                </button>
+            </div>
                 <!-- Turnos en taller -->
                 <div class="row mb-4">
                     <div class="col-12">

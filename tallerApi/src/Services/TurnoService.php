@@ -57,6 +57,19 @@ class TurnoService
                 throw new Exception('Workshop not found');
             }
 
+            // Check if there is an active turn for this license plate
+            $existingTurno = $this->em->createQuery(
+                'SELECT t FROM App\Entities\Turno t WHERE t.taller = :taller AND t.patente = :patente AND t.estado != :finalizado'
+            )->setParameters([
+                'taller' => $taller,
+                'patente' => $datos['patente'],
+                'finalizado' => Turno::ESTADO_FINALIZADO
+            ])->getOneOrNullResult();
+
+            if ($existingTurno) {
+                throw new Exception('Ya tienes un turno asignado. Tu número de turno es ' . $existingTurno->getNumeroTurno());
+            }
+
             // Calculate the next appointment number for this workshop
             $ultimoNumero = $this->em->createQuery(
                 'SELECT MAX(t.numeroTurno) FROM App\Entities\Turno t WHERE t.taller = :taller'
