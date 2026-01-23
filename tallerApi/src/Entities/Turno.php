@@ -8,7 +8,6 @@ use DateTime;
 #[ORM\Table(name: 'turnos')]
 #[ORM\Index(name: 'idx_taller_estado', columns: ['taller_id', 'estado'])]
 #[ORM\Index(name: 'idx_taller_numero', columns: ['taller_id', 'numeroTurno'])]
-#[ORM\UniqueConstraint(name: 'unique_patente', columns: ['patente'])]
 #[ORM\UniqueConstraint(name: 'unique_taller_numero', columns: ['taller_id', 'numeroTurno'])]
 /**
  * Entidad que representa un turno (cita) en un taller.
