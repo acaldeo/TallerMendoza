@@ -132,16 +132,17 @@
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="patente" class="form-label">Patente del Vehículo *</label>
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="patente"
-                                                v-model="turnoForm.patente"
-                                                required
-                                                maxlength="10"
-                                                :disabled="creatingTurno"
-                                                placeholder="Ej: ABC123"
-                                            >
+                                       <input
+                                            type="text"
+                                            class="form-control"
+                                            id="patente"
+                                            v-model="turnoForm.patente"
+                                            @input="turnoForm.patente = $event.target.value.toUpperCase()"
+                                            required
+                                            maxlength="10"
+                                            :disabled="creatingTurno"
+                                            placeholder="Ej: ABC123"
+                                        >
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="descripcionProblema" class="form-label">Descripción del Problema</label>
