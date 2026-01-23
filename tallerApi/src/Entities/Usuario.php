@@ -7,14 +7,30 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'usuarios')]
 #[ORM\UniqueConstraint(name: 'unique_usuario', columns: ['usuario'])]
 /**
- * Entity representing a user in the system.
- * Manages user authentication and association with a workshop.
+ * Entidad que representa un usuario en el sistema.
+ * Gestiona la autenticación de usuarios y la asociación con un taller.
+ *
+ * Propósito general:
+ * - Representar a un administrador o usuario autorizado para gestionar un taller.
+ * - Almacenar credenciales de autenticación (usuario y contraseña hasheada).
+ * - Vincular usuarios a talleres específicos para control de acceso.
+ *
+ * Dependencias:
+ * - Depende de la entidad Taller (relación muchos-a-uno).
+ * - Es utilizada por AuthService para verificar credenciales.
+ * - Los controladores (AdminController) usan esta entidad para login y gestión de usuarios.
+ *
+ * Interacciones con otras capas:
+ * - La capa de servicios (AuthService, UsuarioService) maneja la lógica de autenticación y gestión.
+ * - Los validadores (AuthValidator, UsuarioValidator) verifican datos antes de asignarlos.
+ * - El middleware (AuthMiddleware) usa esta entidad para verificar sesiones.
+ * - El EntityManager persiste y recupera instancias desde la base de datos.
  */
 class Usuario
 {
     /**
-     * The unique identifier for the user.
-     * Auto-generated primary key.
+     * El identificador único del usuario.
+     * Clave primaria generada automáticamente.
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -22,31 +38,31 @@ class Usuario
     private int $id;
 
     /**
-     * The workshop associated with this user.
-     * Many-to-one relationship with Taller entity, cannot be null.
+     * El taller asociado con este usuario.
+     * Relación muchos-a-uno con la entidad Taller, no puede ser nula.
      */
     #[ORM\ManyToOne(targetEntity: Taller::class, inversedBy: 'usuarios')]
     #[ORM\JoinColumn(nullable: false)]
     private Taller $taller;
 
     /**
-     * The username for authentication.
-     * Must be unique across the system.
+     * El nombre de usuario para autenticación.
+     * Debe ser único en todo el sistema.
      */
     #[ORM\Column(type: 'string', length: 100)]
     private string $usuario;
 
     /**
-     * The hashed password for the user.
-     * Stored securely using password hashing.
+     * La contraseña hasheada del usuario.
+     * Almacenada de forma segura utilizando hash de contraseñas.
      */
     #[ORM\Column(type: 'string', length: 255)]
     private string $passwordHash;
 
     /**
-     * Gets the unique identifier of the user.
+     * Obtiene el identificador único del usuario.
      *
-     * @return int The user ID.
+     * @return int El ID del usuario.
      */
     public function getId(): int
     {
@@ -54,9 +70,9 @@ class Usuario
     }
 
     /**
-     * Gets the workshop associated with this user.
+     * Obtiene el taller asociado con este usuario.
      *
-     * @return Taller The Taller entity.
+     * @return Taller La entidad Taller.
      */
     public function getTaller(): Taller
     {
@@ -64,10 +80,10 @@ class Usuario
     }
 
     /**
-     * Sets the workshop for this user.
+     * Establece el taller para este usuario.
      *
-     * @param Taller $taller The Taller entity.
-     * @return self Returns the instance for method chaining.
+     * @param Taller $taller La entidad Taller.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setTaller(Taller $taller): self
     {
@@ -76,9 +92,9 @@ class Usuario
     }
 
     /**
-     * Gets the username.
+     * Obtiene el nombre de usuario.
      *
-     * @return string The username.
+     * @return string El nombre de usuario.
      */
     public function getUsuario(): string
     {
@@ -86,10 +102,10 @@ class Usuario
     }
 
     /**
-     * Sets the username.
+     * Establece el nombre de usuario.
      *
-     * @param string $usuario The username.
-     * @return self Returns the instance for method chaining.
+     * @param string $usuario El nombre de usuario.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setUsuario(string $usuario): self
     {
@@ -98,9 +114,9 @@ class Usuario
     }
 
     /**
-     * Gets the password hash.
+     * Obtiene el hash de la contraseña.
      *
-     * @return string The hashed password.
+     * @return string La contraseña hasheada.
      */
     public function getPasswordHash(): string
     {
@@ -108,10 +124,10 @@ class Usuario
     }
 
     /**
-     * Sets the password hash.
+     * Establece el hash de la contraseña.
      *
-     * @param string $passwordHash The hashed password.
-     * @return self Returns the instance for method chaining.
+     * @param string $passwordHash La contraseña hasheada.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setPasswordHash(string $passwordHash): self
     {
@@ -120,10 +136,10 @@ class Usuario
     }
 
     /**
-     * Verifies if the provided password matches the stored hash.
+     * Verifica si la contraseña proporcionada coincide con el hash almacenado.
      *
-     * @param string $password The plain text password to verify.
-     * @return bool True if the password is correct, false otherwise.
+     * @param string $password La contraseña en texto plano a verificar.
+     * @return bool True si la contraseña es correcta, false en caso contrario.
      */
     public function verificarPassword(string $password): bool
     {

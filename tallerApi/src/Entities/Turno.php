@@ -12,6 +12,23 @@ use DateTime;
 /**
  * Entidad que representa un turno (cita) en un taller.
  * Gestiona los detalles del turno incluyendo información del cliente, vehículo, descripción del problema y estado.
+ *
+ * Propósito general:
+ * - Representar una cita de servicio en un taller mecánico.
+ * - Almacenar datos del cliente, vehículo y problema reportado.
+ * - Gestionar el estado del turno a lo largo de su ciclo de vida (espera, en taller, finalizado).
+ * - Mantener un registro temporal de creación, inicio y finalización.
+ *
+ * Dependencias:
+ * - Depende de la entidad Taller (relación muchos-a-uno).
+ * - Es utilizada por TurnoService para operaciones de negocio.
+ * - Los controladores (TallerController, AdminController) interactúan con esta entidad a través de servicios.
+ * - El estado se valida y cambia según reglas de negocio definidas en los servicios.
+ *
+ * Interacciones con otras capas:
+ * - La capa de servicios (TurnoService) maneja la lógica de creación, actualización y consulta de turnos.
+ * - Los validadores (TurnoValidator) verifican los datos antes de asignarlos a esta entidad.
+ * - El EntityManager (de Doctrine) persiste y recupera instancias de esta entidad desde la base de datos.
  */
 class Turno
 {
@@ -54,64 +71,64 @@ class Turno
     private string $nombreCliente;
 
     /**
-     * The client's phone number.
-     * Stored as a string with max length 20.
+     * El número de teléfono del cliente.
+     * Almacenado como cadena con longitud máxima de 20.
      */
     #[ORM\Column(type: 'string', length: 20)]
     private string $telefono;
 
     /**
-     * The model of the vehicle for this turn.
-      * Stored as a string with max length 255.
-      */
-     #[ORM\Column(type: 'string', length: 255)]
-     private string $modeloVehiculo;
+     * El modelo del vehículo para este turno.
+     * Almacenado como cadena con longitud máxima de 255.
+     */
+    #[ORM\Column(type: 'string', length: 255)]
+    private string $modeloVehiculo;
 
-     /**
-      * The license plate of the vehicle for this turn.
-      * Stored as a string with max length 10.
-      */
-     #[ORM\Column(type: 'string', length: 10, nullable: true)]
-     private string $patente;
-     
     /**
-     * Description of the problem with the vehicle.
-     * Stored as text, allowing longer descriptions.
+     * La patente (placa) del vehículo para este turno.
+     * Almacenada como cadena con longitud máxima de 10, puede ser nula.
+     */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private string $patente;
+
+    /**
+     * Descripción del problema con el vehículo.
+     * Almacenada como texto, permitiendo descripciones más largas.
      */
     #[ORM\Column(type: 'text')]
     private string $descripcionProblema;
 
     /**
-     * The current state of the turn.
-     * Uses constants: EN_ESPERA, EN_TALLER, FINALIZADO.
+     * El estado actual del turno.
+     * Utiliza constantes: EN_ESPERA, EN_TALLER, FINALIZADO.
      */
     #[ORM\Column(type: 'string', length: 20)]
     private string $estado;
 
     /**
-     * The date and time when the turn was created.
-     * Automatically set in constructor.
+     * La fecha y hora cuando el turno fue creado.
+     * Se establece automáticamente en el constructor.
      */
     #[ORM\Column(type: 'datetime')]
     private DateTime $fechaCreacion;
 
     /**
-     * The date and time when work on the turn started.
-     * Set automatically when state changes to EN_TALLER.
+     * La fecha y hora cuando el trabajo en el turno comenzó.
+     * Se establece automáticamente cuando el estado cambia a EN_TALLER.
      */
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTime $fechaInicio = null;
 
     /**
-     * The date and time when the turn was completed.
-     * Set automatically when state changes to FINALIZADO.
+     * La fecha y hora cuando el turno fue completado.
+     * Se establece automáticamente cuando el estado cambia a FINALIZADO.
      */
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTime $fechaFinalizacion = null;
 
     /**
-     * Constructor for the Turno entity.
-     * Initializes creation date to current time and state to EN_ESPERA.
+     * Constructor de la entidad Turno.
+     * Inicializa la fecha de creación a la hora actual y el estado a EN_ESPERA.
      */
     public function __construct()
     {
@@ -120,9 +137,9 @@ class Turno
     }
 
     /**
-     * Gets the unique identifier of the turn.
+     * Obtiene el identificador único del turno.
      *
-     * @return int The turn ID.
+     * @return int El ID del turno.
      */
     public function getId(): int
     {
@@ -130,9 +147,9 @@ class Turno
     }
 
     /**
-     * Gets the workshop associated with this turn.
+     * Obtiene el taller asociado con este turno.
      *
-     * @return Taller The Taller entity.
+     * @return Taller La entidad Taller.
      */
     public function getTaller(): Taller
     {
@@ -140,10 +157,10 @@ class Turno
     }
 
     /**
-     * Sets the workshop for this turn.
+     * Establece el taller para este turno.
      *
-     * @param Taller $taller The Taller entity.
-     * @return self Returns the instance for method chaining.
+     * @param Taller $taller La entidad Taller.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setTaller(Taller $taller): self
     {
@@ -152,9 +169,9 @@ class Turno
     }
 
     /**
-     * Gets the turn number.
+     * Obtiene el número de turno.
      *
-     * @return int The turn number.
+     * @return int El número de turno.
      */
     public function getNumeroTurno(): int
     {
@@ -162,10 +179,10 @@ class Turno
     }
 
     /**
-     * Sets the turn number.
+     * Establece el número de turno.
      *
-     * @param int $numeroTurno The turn number.
-     * @return self Returns the instance for method chaining.
+     * @param int $numeroTurno El número de turno.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setNumeroTurno(int $numeroTurno): self
     {
@@ -174,9 +191,9 @@ class Turno
     }
 
     /**
-     * Gets the client's name.
+     * Obtiene el nombre del cliente.
      *
-     * @return string The client's name.
+     * @return string El nombre del cliente.
      */
     public function getNombreCliente(): string
     {
@@ -184,10 +201,10 @@ class Turno
     }
 
     /**
-     * Sets the client's name.
+     * Establece el nombre del cliente.
      *
-     * @param string $nombreCliente The client's name.
-     * @return self Returns the instance for method chaining.
+     * @param string $nombreCliente El nombre del cliente.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setNombreCliente(string $nombreCliente): self
     {
@@ -196,9 +213,9 @@ class Turno
     }
 
     /**
-     * Gets the client's phone number.
+     * Obtiene el número de teléfono del cliente.
      *
-     * @return string The phone number.
+     * @return string El número de teléfono.
      */
     public function getTelefono(): string
     {
@@ -206,10 +223,10 @@ class Turno
     }
 
     /**
-     * Sets the client's phone number.
+     * Establece el número de teléfono del cliente.
      *
-     * @param string $telefono The phone number.
-     * @return self Returns the instance for method chaining.
+     * @param string $telefono El número de teléfono.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setTelefono(string $telefono): self
     {
@@ -218,9 +235,9 @@ class Turno
     }
 
     /**
-     * Gets the vehicle model.
+     * Obtiene el modelo del vehículo.
      *
-     * @return string The vehicle model.
+     * @return string El modelo del vehículo.
      */
     public function getModeloVehiculo(): string
     {
@@ -228,10 +245,10 @@ class Turno
     }
 
     /**
-     * Sets the vehicle model.
+     * Establece el modelo del vehículo.
      *
-     * @param string $modeloVehiculo The vehicle model.
-     * @return self Returns the instance for method chaining.
+     * @param string $modeloVehiculo El modelo del vehículo.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setModeloVehiculo(string $modeloVehiculo): self
     {
@@ -240,9 +257,9 @@ class Turno
     }
 
     /**
-     * Gets the vehicle license plate.
+     * Obtiene la patente (placa) del vehículo.
      *
-     * @return string|null The license plate.
+     * @return string|null La patente.
      */
     public function getPatente(): ?string
     {
@@ -250,10 +267,10 @@ class Turno
     }
 
     /**
-     * Sets the vehicle license plate.
+     * Establece la patente (placa) del vehículo.
      *
-     * @param string|null $patente The license plate.
-     * @return self Returns the instance for method chaining.
+     * @param string|null $patente La patente.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setPatente(?string $patente): self
     {
@@ -262,9 +279,9 @@ class Turno
     }
 
     /**
-     * Gets the problem description.
+     * Obtiene la descripción del problema.
      *
-     * @return string The problem description.
+     * @return string La descripción del problema.
      */
     public function getDescripcionProblema(): string
     {
@@ -272,10 +289,10 @@ class Turno
     }
 
     /**
-     * Sets the problem description.
+     * Establece la descripción del problema.
      *
-     * @param string $descripcionProblema The problem description.
-     * @return self Returns the instance for method chaining.
+     * @param string $descripcionProblema La descripción del problema.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setDescripcionProblema(string $descripcionProblema): self
     {
@@ -284,9 +301,9 @@ class Turno
     }
 
     /**
-     * Gets the current state of the turn.
+     * Obtiene el estado actual del turno.
      *
-     * @return string The state (one of the ESTADO_* constants).
+     * @return string El estado (uno de las constantes ESTADO_*).
      */
     public function getEstado(): string
     {
@@ -294,12 +311,12 @@ class Turno
     }
 
     /**
-     * Sets the state of the turn.
-     * Automatically updates fechaInicio when transitioning to EN_TALLER,
-     * and fechaFinalizacion when transitioning to FINALIZADO.
+     * Establece el estado del turno.
+     * Actualiza automáticamente fechaInicio al transitar a EN_TALLER,
+     * y fechaFinalizacion al transitar a FINALIZADO.
      *
-     * @param string $estado The new state.
-     * @return self Returns the instance for method chaining.
+     * @param string $estado El nuevo estado.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setEstado(string $estado): self
     {
@@ -313,9 +330,9 @@ class Turno
     }
 
     /**
-     * Gets the creation date and time of the turn.
+     * Obtiene la fecha y hora de creación del turno.
      *
-     * @return DateTime The creation timestamp.
+     * @return DateTime La marca de tiempo de creación.
      */
     public function getFechaCreacion(): DateTime
     {
@@ -323,9 +340,9 @@ class Turno
     }
 
     /**
-     * Gets the start date and time of the turn.
+     * Obtiene la fecha y hora de inicio del turno.
      *
-     * @return DateTime|null The start timestamp, or null if not started.
+     * @return DateTime|null La marca de tiempo de inicio, o null si no ha empezado.
      */
     public function getFechaInicio(): ?DateTime
     {
@@ -333,9 +350,9 @@ class Turno
     }
 
     /**
-     * Gets the completion date and time of the turn.
+     * Obtiene la fecha y hora de finalización del turno.
      *
-     * @return DateTime|null The completion timestamp, or null if not completed.
+     * @return DateTime|null La marca de tiempo de finalización, o null si no ha finalizado.
      */
     public function getFechaFinalizacion(): ?DateTime
     {

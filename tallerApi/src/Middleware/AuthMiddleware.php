@@ -4,45 +4,59 @@ namespace App\Middleware;
 use App\Utils\ApiResponse;
 
 /**
- * AuthMiddleware provides static methods to enforce authentication and authorization for routes.
- * It checks session-based authentication to protect access to resources, ensuring that only authenticated users
- * can access protected endpoints and that users have appropriate permissions for specific workshops.
+ * AuthMiddleware proporciona métodos estáticos para hacer cumplir autenticación y autorización en rutas.
+ * Verifica autenticación basada en sesiones para proteger acceso a recursos, asegurando que solo usuarios autenticados
+ * puedan acceder a endpoints protegidos y que los usuarios tengan permisos apropiados para talleres específicos.
+ *
+ * Propósito general:
+ * - Proteger rutas administrativas de acceso no autorizado.
+ * - Verificar que usuarios estén logueados.
+ * - Controlar acceso a talleres específicos basado en permisos.
+ *
+ * Dependencias:
+ * - Utiliza ApiResponse para enviar respuestas de error.
+ * - Depende de sesiones PHP para mantener estado de autenticación.
+ * - Es utilizado por index.php y controladores para verificar acceso.
+ *
+ * Interacciones con otras capas:
+ * - Los controladores llaman a estos métodos antes de procesar solicitudes protegidas.
+ * - Si falla la verificación, termina la ejecución y envía error HTTP.
  */
 class AuthMiddleware
 {
     /**
-     * Requires that the user is authenticated by checking if the user_id is set in the session.
-     * If the user is not authenticated, sends an unauthorized error response and terminates the request.
+     * Requiere que el usuario esté autenticado verificando si user_id está establecido en la sesión.
+     * Si el usuario no está autenticado, envía una respuesta de error no autorizado y termina la solicitud.
      *
      * @return void
      */
     public static function requireAuth(): void
     {
-        // Check if the user is logged in by verifying the presence of user_id in session
+        // Verificar si el usuario está logueado verificando la presencia de user_id en sesión
         if (!isset($_SESSION['user_id'])) {
-            // Send an unauthorized error response with HTTP 401 status
-            ApiResponse::error('Unauthorized access', 401);
+            // Enviar respuesta de error no autorizado con estado HTTP 401
+            ApiResponse::error('Acceso no autorizado', 401);
             exit;
         }
     }
 
     /**
-     * Requires authentication and verifies that the authenticated user has access to the specified workshop.
-     * First ensures the user is authenticated, then checks if the user's associated workshop ID matches the provided ID.
-     * If access is denied, sends a forbidden error response and terminates the request.
+     * Requiere autenticación y verifica que el usuario autenticado tenga acceso al taller especificado.
+     * Primero asegura que el usuario esté autenticado, luego verifica si el ID del taller del usuario coincide con el ID proporcionado.
+     * Si el acceso es denegado, envía una respuesta de error prohibido y termina la solicitud.
      *
-     * @param int $tallerId The ID of the workshop to check access for.
+     * @param int $tallerId El ID del taller para verificar acceso.
      * @return void
      */
     public static function requireTallerAccess(int $tallerId): void
     {
-        // First, ensure the user is authenticated
+        // Primero, asegurar que el usuario esté autenticado
         self::requireAuth();
 
-        // Check if the user's workshop ID matches the requested workshop ID
+        // Verificar si el ID del taller del usuario coincide con el ID del taller solicitado
         if ($_SESSION['taller_id'] != $tallerId) {
-            // Send a forbidden error response with HTTP 403 status
-            ApiResponse::error('Access denied to workshop', 403);
+            // Enviar respuesta de error prohibido con estado HTTP 403
+            ApiResponse::error('Acceso denegado al taller', 403);
             exit;
         }
     }

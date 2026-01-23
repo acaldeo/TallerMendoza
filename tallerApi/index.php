@@ -1,7 +1,24 @@
 <?php
 /**
- * Main entry point for the Taller API.
- * Handles routing, CORS headers, and dispatches requests to appropriate controllers.
+ * Punto de entrada principal de la API del Taller.
+ * Este archivo maneja el enrutamiento de las solicitudes HTTP, configura los encabezados CORS para permitir solicitudes de origen cruzado,
+ * registra el manejador de errores global y despacha las solicitudes a los controladores apropiados.
+ *
+ * Flujo de ejecución general:
+ * 1. Se incluyen los archivos necesarios (autoload y bootstrap).
+ * 2. Se configuran los encabezados CORS.
+ * 3. Se maneja la solicitud OPTIONS (preflight).
+ * 4. Se registra el manejador de errores.
+ * 5. Se inicia la sesión para autenticación.
+ * 6. Se parsea la URI de la solicitud.
+ * 7. Se enruta la solicitud basada en la ruta y el método HTTP.
+ * 8. Si ocurre una excepción, se lanza para que el ErrorHandler la gestione.
+ *
+ * Dependencias:
+ * - Utiliza TallerController y AdminController para manejar las lógicas de negocio.
+ * - Usa AuthMiddleware para verificar autenticación en rutas protegidas.
+ * - ApiResponse para enviar respuestas estandarizadas.
+ * - ErrorHandler para manejar excepciones globalmente.
  */
 
 require_once 'vendor/autoload.php';
@@ -13,31 +30,36 @@ use App\Middleware\AuthMiddleware;
 use App\Utils\ApiResponse;
 use App\Utils\ErrorHandler;
 
-// Set CORS headers to allow cross-origin requests
+// Configurar encabezados CORS para permitir solicitudes de origen cruzado
+// Esto permite que el frontend (posiblemente en otro dominio) acceda a la API
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');
 
-// Handle preflight OPTIONS request
+// Manejar solicitud OPTIONS (preflight) para CORS
+// Las solicitudes OPTIONS son enviadas por el navegador antes de la solicitud real
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Register global error handler
+// Registrar el manejador de errores global
+// Esto asegura que todas las excepciones sean manejadas de manera consistente
 ErrorHandler::register();
 
-// Start session for user authentication
+// Iniciar sesión para manejar la autenticación de usuarios
+// Las sesiones se usan para mantener el estado de login del administrador
 session_start();
 
-// Get request URI and method
+// Obtener la URI y el método de la solicitud HTTP
 $requestUri = $_SERVER['REQUEST_URI'];
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
-// Parse the path and remove prefix if exists
+// Parsear la ruta y remover prefijos si existen
+// Esto permite que la API funcione en diferentes rutas de despliegue
 $path = parse_url($requestUri, PHP_URL_PATH);
-// Remove any prefix before /api/ to make it work in different deployment paths
+// Remover cualquier prefijo antes de /api/ para hacer que funcione en diferentes rutas de despliegue
 if (strpos($path, '/api/') !== 0) {
     $pos = strpos($path, '/api/');
     if ($pos !== false) {
@@ -45,10 +67,12 @@ if (strpos($path, '/api/') !== 0) {
     }
 }
 
-// Route the request based on path and method
+// Enrutar la solicitud basada en la ruta y el método
+// Cada ruta corresponde a un endpoint específico de la API
 try {
     if ($path === '/' || $path === '/index.php') {
-        // API info endpoint
+        // Endpoint de información de la API
+        // Devuelve una lista de endpoints disponibles para documentación
         ApiResponse::success([
             'message' => 'API Taller Turnos v1',
             'endpoints' => [
@@ -62,90 +86,98 @@ try {
     } elseif (preg_match('#^/api/v1/taller/(\d+)/turnos$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'POST') {
-            // Create a new turno for the taller
+            // Crear un nuevo turno para el taller especificado
+            // Este endpoint permite a los clientes crear turnos sin autenticación
             $controller = new TallerController();
             $controller->crearTurno($tallerId);
         }
     } elseif (preg_match('#^/api/v1/taller/(\d+)/estado$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'GET') {
-            // Get the estado of the taller
+            // Obtener el estado del taller (número de turnos en cola, etc.)
+            // Información pública para mostrar en el frontend del cliente
             $controller = new TallerController();
             $controller->obtenerEstado($tallerId);
         }
     } elseif ($path === '/api/v1/admin/login' && $requestMethod === 'POST') {
-        // Admin login endpoint
+        // Endpoint de login para administradores
+        // Autentica al usuario y establece la sesión
         $controller = new AdminController();
         $controller->login();
     } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/turnos$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'GET') {
-            // Require authentication for admin actions
+            // Requiere autenticación para acciones de admin
+            // Lista todos los turnos del taller para gestión administrativa
             AuthMiddleware::requireAuth();
-            // List turnos for the taller
             $controller = new AdminController();
             $controller->listarTurnos($tallerId);
         }
     } elseif (preg_match('#^/api/v1/admin/turno/(\d+)/finalizar$#', $path, $matches)) {
         $turnoId = (int)$matches[1];
         if ($requestMethod === 'POST') {
-            // Require authentication
+            // Requiere autenticación
+            // Finaliza un turno específico, marcándolo como completado
             AuthMiddleware::requireAuth();
-            // Finalize the turno
             $controller = new AdminController();
             $controller->finalizarTurno($turnoId);
         }
     } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/usuarios$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'GET') {
-            // List usuarios for the taller
+            // Lista los usuarios asociados al taller
             $controller = new AdminController();
             $controller->listarUsuarios($tallerId);
         } elseif ($requestMethod === 'POST') {
-            // Create a new usuario for the taller
+            // Crear un nuevo usuario para el taller
             $controller = new AdminController();
             $controller->crearUsuario($tallerId);
         }
     } elseif (preg_match('#^/api/v1/admin/usuario/(\d+)/password$#', $path, $matches)) {
         $usuarioId = (int)$matches[1];
         if ($requestMethod === 'PUT') {
-            // Update password for the usuario
+            // Actualizar la contraseña de un usuario específico
             $controller = new AdminController();
             $controller->actualizarPasswordUsuario($usuarioId);
         }
     } elseif (preg_match('#^/api/v1/admin/usuario/(\d+)$#', $path, $matches)) {
         $usuarioId = (int)$matches[1];
         if ($requestMethod === 'DELETE') {
-            // Delete the usuario
+            // Eliminar un usuario del sistema
             $controller = new AdminController();
             $controller->eliminarUsuario($usuarioId);
         }
     } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/configuracion-email$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'GET') {
+            // Obtener la configuración de email del taller
             $controller = new AdminController();
             $controller->obtenerConfiguracionEmail($tallerId);
         } elseif ($requestMethod === 'POST') {
+            // Guardar o actualizar la configuración de email
             $controller = new AdminController();
             $controller->guardarConfiguracionEmail($tallerId);
         }
     } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/probar-email$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'POST') {
+            // Probar la configuración de email enviando un email de prueba
             $controller = new AdminController();
             $controller->probarConfiguracionEmail($tallerId);
         }
     } elseif ($path === '/api/v1/admin/talleres' && $requestMethod === 'POST') {
-        // Require authentication
+        // Requiere autenticación
+        // Crear un nuevo taller en el sistema
         AuthMiddleware::requireAuth();
-        // Create a new taller
         $controller = new AdminController();
         $controller->crearTaller();
     } else {
-        // Endpoint not found
+        // Endpoint no encontrado
+        // Si ninguna ruta coincide, devolver error 404
         ApiResponse::error('Endpoint no encontrado', 404);
     }
 } catch (Exception $e) {
-    // Let the ErrorHandler manage exceptions
+    // Dejar que el ErrorHandler gestione las excepciones
+    // Esto permite un manejo centralizado de errores
     throw $e;
 }

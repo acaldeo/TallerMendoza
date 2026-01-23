@@ -8,14 +8,29 @@ use Doctrine\Common\Collections\Collection;
 #[ORM\Entity]
 #[ORM\Table(name: 'talleres')]
 /**
- * Entity representing a workshop (Taller) in the system.
- * Manages workshop information such as name, capacity, and relationships to turns and users.
+ * Entidad que representa un taller (workshop) en el sistema.
+ * Gestiona información del taller como nombre, capacidad, y relaciones con turnos y usuarios.
+ *
+ * Propósito general:
+ * - Representar un taller mecánico en el sistema de gestión de turnos.
+ * - Definir la capacidad máxima de turnos simultáneos.
+ * - Mantener colecciones de turnos y usuarios asociados.
+ *
+ * Dependencias:
+ * - Tiene una relación uno-a-muchos con Turno (un taller puede tener muchos turnos).
+ * - Tiene una relación uno-a-muchos con Usuario (un taller puede tener muchos usuarios administradores).
+ * - Es referenciada por ConfiguracionEmail (uno a uno, pero no mapeada aquí).
+ *
+ * Interacciones con otras capas:
+ * - Los servicios como TurnoService y UsuarioService operan sobre las colecciones de turnos y usuarios.
+ * - Los controladores (AdminController, TallerController) usan esta entidad para gestionar talleres.
+ * - El EntityManager persiste y recupera instancias desde la base de datos.
  */
 class Taller
 {
     /**
-     * The unique identifier for the workshop.
-     * Auto-generated primary key.
+     * El identificador único del taller.
+     * Clave primaria generada automáticamente.
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -23,36 +38,36 @@ class Taller
     private int $id;
 
     /**
-     * The name of the workshop.
-     * Stored as a string with maximum length of 255 characters.
+     * El nombre del taller.
+     * Almacenado como cadena con longitud máxima de 255 caracteres.
      */
     #[ORM\Column(type: 'string', length: 255)]
     private string $nombre;
 
     /**
-     * The maximum capacity of the workshop.
-     * Defaults to 3 if not specified.
+     * La capacidad máxima del taller.
+     * Por defecto 3 si no se especifica.
      */
     #[ORM\Column(type: 'integer')]
     private int $capacidad = 3;
 
     /**
-     * Collection of turns (Turno) associated with this workshop.
-     * One-to-many relationship, mapped by 'taller' in Turno entity.
+     * Colección de turnos (Turno) asociados con este taller.
+     * Relación uno-a-muchos, mapeada por 'taller' en la entidad Turno.
      */
     #[ORM\OneToMany(mappedBy: 'taller', targetEntity: Turno::class)]
     private Collection $turnos;
 
     /**
-     * Collection of users (Usuario) associated with this workshop.
-     * One-to-many relationship, mapped by 'taller' in Usuario entity.
+     * Colección de usuarios (Usuario) asociados con este taller.
+     * Relación uno-a-muchos, mapeada por 'taller' en la entidad Usuario.
      */
     #[ORM\OneToMany(mappedBy: 'taller', targetEntity: Usuario::class)]
     private Collection $usuarios;
 
     /**
-     * Constructor for the Taller entity.
-     * Initializes the collections for turnos and usuarios.
+     * Constructor de la entidad Taller.
+     * Inicializa las colecciones para turnos y usuarios.
      */
     public function __construct()
     {
@@ -61,9 +76,9 @@ class Taller
     }
 
     /**
-     * Gets the unique identifier of the workshop.
+     * Obtiene el identificador único del taller.
      *
-     * @return int The workshop ID.
+     * @return int El ID del taller.
      */
     public function getId(): int
     {
@@ -71,9 +86,9 @@ class Taller
     }
 
     /**
-     * Gets the name of the workshop.
+     * Obtiene el nombre del taller.
      *
-     * @return string The workshop name.
+     * @return string El nombre del taller.
      */
     public function getNombre(): string
     {
@@ -81,10 +96,10 @@ class Taller
     }
 
     /**
-     * Sets the name of the workshop.
+     * Establece el nombre del taller.
      *
-     * @param string $nombre The new name for the workshop.
-     * @return self Returns the instance for method chaining.
+     * @param string $nombre El nuevo nombre para el taller.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setNombre(string $nombre): self
     {
@@ -93,9 +108,9 @@ class Taller
     }
 
     /**
-     * Gets the capacity of the workshop.
+     * Obtiene la capacidad del taller.
      *
-     * @return int The workshop capacity.
+     * @return int La capacidad del taller.
      */
     public function getCapacidad(): int
     {
@@ -103,10 +118,10 @@ class Taller
     }
 
     /**
-     * Sets the capacity of the workshop.
+     * Establece la capacidad del taller.
      *
-     * @param int $capacidad The new capacity for the workshop.
-     * @return self Returns the instance for method chaining.
+     * @param int $capacidad La nueva capacidad para el taller.
+     * @return self Retorna la instancia para encadenamiento de métodos.
      */
     public function setCapacidad(int $capacidad): self
     {
@@ -115,9 +130,9 @@ class Taller
     }
 
     /**
-     * Gets the collection of turns associated with this workshop.
+     * Obtiene la colección de turnos asociados con este taller.
      *
-     * @return Collection The collection of Turno entities.
+     * @return Collection La colección de entidades Turno.
      */
     public function getTurnos(): Collection
     {
@@ -125,9 +140,9 @@ class Taller
     }
 
     /**
-     * Gets the collection of users associated with this workshop.
+     * Obtiene la colección de usuarios asociados con este taller.
      *
-     * @return Collection The collection of Usuario entities.
+     * @return Collection La colección de entidades Usuario.
      */
     public function getUsuarios(): Collection
     {

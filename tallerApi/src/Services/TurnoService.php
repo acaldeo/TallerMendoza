@@ -9,23 +9,41 @@ use Doctrine\DBAL\LockMode;
 use Exception;
 
 /**
- * Service class for managing workshop appointments (turnos).
+ * Clase de servicio para gestionar citas de taller (turnos).
  *
- * This class handles the creation, finalization, and querying of appointments in a workshop system.
- * It manages appointment states, queue management, and ensures thread-safe operations using database locks.
- * Appointments can be in states like waiting, in workshop, or finalized, with automatic promotion based on workshop capacity.
+ * Esta clase maneja la creación, finalización y consulta de citas en un sistema de talleres.
+ * Gestiona los estados de las citas, la administración de colas y asegura operaciones thread-safe usando bloqueos de base de datos.
+ * Las citas pueden estar en estados como esperando, en taller o finalizado, con promoción automática basada en la capacidad del taller.
+ *
+ * Propósito general:
+ * - Centralizar la lógica de negocio para operaciones con turnos.
+ * - Garantizar integridad de datos mediante transacciones y bloqueos.
+ * - Gestionar la cola de turnos y promociones automáticas.
+ * - Integrar notificaciones por email al crear turnos.
+ *
+ * Dependencias:
+ * - Utiliza EntityManager de Doctrine para operaciones de BD.
+ * - Depende de entidades Taller y Turno.
+ * - Usa EmailService para enviar notificaciones.
+ * - Emplea bloqueos pesimistas para concurrencia.
+ *
+ * Interacciones con otras capas:
+ * - Es llamada por controladores (TallerController, AdminController) para lógica de turnos.
+ * - Accede directamente a la base de datos a través del EntityManager.
+ * - Envía emails a través de EmailService sin fallar la operación principal.
+ * - Maneja excepciones que pueden ser lanzadas a los controladores.
  */
 class TurnoService
 {
-    /** @var EntityManager Doctrine EntityManager for database operations */
+    /** @var EntityManager EntityManager de Doctrine para operaciones de base de datos */
     private EntityManager $em;
-    /** @var EmailService Service for sending email notifications */
+    /** @var EmailService Servicio para enviar notificaciones por email */
     private EmailService $emailService;
 
     /**
-     * Constructor to inject the Doctrine EntityManager dependency.
+     * Constructor para inyectar la dependencia del EntityManager de Doctrine.
      *
-     * @param EntityManager $em The EntityManager instance for database interactions.
+     * @param EntityManager $em La instancia del EntityManager para interacciones con la base de datos.
      */
     public function __construct(EntityManager $em)
     {
@@ -34,30 +52,30 @@ class TurnoService
     }
 
     /**
-     * Creates a new appointment (turno) for a workshop.
+     * Crea una nueva cita (turno) para un taller.
      *
-     * This method handles the creation of a new appointment with automatic numbering,
-     * state assignment based on workshop capacity, and ensures thread-safe operations
-     * using pessimistic locking on the workshop entity.
+     * Este método maneja la creación de una nueva cita con numeración automática,
+     * asignación de estado basada en la capacidad del taller, y asegura operaciones thread-safe
+     * usando bloqueo pesimista en la entidad del taller.
      *
-     * @param int $tallerId The ID of the workshop where the appointment is being created.
-     * @param array $datos Array containing appointment data: nombreCliente, telefono, modeloVehiculo, descripcionProblema.
-     * @return Turno The newly created appointment entity.
-     * @throws Exception If the workshop is not found or database operations fail.
+     * @param int $tallerId El ID del taller donde se está creando la cita.
+     * @param array $datos Array que contiene datos de la cita: nombreCliente, telefono, modeloVehiculo, descripcionProblema, patente.
+     * @return Turno La entidad de cita recién creada.
+     * @throws Exception Si el taller no se encuentra o fallan las operaciones de base de datos.
      */
     public function crearTurno(int $tallerId, array $datos): Turno
     {
-        // Begin database transaction for atomicity
+        // Iniciar transacción de base de datos para atomicidad
         $this->em->beginTransaction();
 
         try {
-            // Lock the workshop entity to prevent concurrent modifications
+            // Bloquear la entidad del taller para prevenir modificaciones concurrentes
             $taller = $this->em->find(Taller::class, $tallerId, LockMode::PESSIMISTIC_WRITE);
             if (!$taller) {
-                throw new Exception('Workshop not found');
+                throw new Exception('Taller no encontrado');
             }
 
-            // Check if there is an active turn for this license plate
+            // Verificar si hay un turno activo para esta patente
             $existingTurno = $this->em->createQuery(
                 'SELECT t FROM App\Entities\Turno t WHERE t.taller = :taller AND t.patente = :patente AND t.estado != :finalizado'
             )->setParameters([
@@ -70,12 +88,12 @@ class TurnoService
                 throw new Exception('Ya tienes un turno asignado. Tu número de turno es ' . $existingTurno->getNumeroTurno());
             }
 
-            // Calculate the next appointment number for this workshop
+            // Calcular el siguiente número de turno para este taller
             $ultimoNumero = $this->em->createQuery(
                 'SELECT MAX(t.numeroTurno) FROM App\Entities\Turno t WHERE t.taller = :taller'
             )->setParameter('taller', $taller)->getSingleScalarResult() ?? 0;
 
-            // Create new appointment entity with provided data
+            // Crear nueva entidad de turno con los datos proporcionados
             $turno = new Turno();
             $turno->setTaller($taller)
                   ->setNumeroTurno($ultimoNumero + 1)
@@ -85,7 +103,7 @@ class TurnoService
                   ->setPatente($datos['patente'])
                   ->setDescripcionProblema($datos['descripcionProblema']);
 
-            // Check if appointment can go directly to workshop based on capacity
+            // Verificar si el turno puede ir directamente al taller basado en la capacidad
             $turnosEnTaller = $this->em->createQuery(
                 'SELECT COUNT(t) FROM App\Entities\Turno t WHERE t.taller = :taller AND t.estado = :estado'
             )->setParameters([
@@ -97,57 +115,57 @@ class TurnoService
                 $turno->setEstado(Turno::ESTADO_EN_TALLER);
             }
 
-            // Persist and flush the new appointment
+            // Persistir y hacer flush del nuevo turno
             $this->em->persist($turno);
             $this->em->flush();
             $this->em->commit();
 
-            // Send email notification for new appointment
+            // Enviar notificación por email para nuevo turno
             try {
                 $this->emailService->enviarNotificacionNuevoTurno($turno);
             } catch (Exception $emailError) {
-                // Log email error but don't fail the appointment creation
-                error_log("Email notification failed: " . $emailError->getMessage());
+                // Registrar error de email pero no fallar la creación del turno
+                error_log("Notificación de email falló: " . $emailError->getMessage());
             }
 
             return $turno;
         } catch (Exception $e) {
-            // Rollback transaction on error
+            // Rollback de transacción en error
             $this->em->rollback();
             throw $e;
         }
     }
 
     /**
-     * Finalizes an appointment that is currently in the workshop.
+     * Finaliza una cita que está actualmente en el taller.
      *
-     * Marks the appointment as finalized and automatically promotes the next waiting appointment
-     * to the workshop if capacity allows. Uses pessimistic locking to ensure thread safety.
+     * Marca la cita como finalizada y automáticamente promociona la siguiente cita en espera
+     * al taller si la capacidad lo permite. Usa bloqueo pesimista para asegurar thread safety.
      *
-     * @param int $turnoId The ID of the appointment to finalize.
-     * @throws Exception If the appointment is not found or not in the correct state.
+     * @param int $turnoId El ID de la cita a finalizar.
+     * @throws Exception Si la cita no se encuentra o no está en el estado correcto.
      */
     public function finalizarTurno(int $turnoId): void
     {
-        // Begin transaction for atomic operations
+        // Iniciar transacción para operaciones atómicas
         $this->em->beginTransaction();
 
         try {
-            // Lock the appointment entity for safe modification
+            // Bloquear la entidad de la cita para modificación segura
             $turno = $this->em->find(Turno::class, $turnoId, LockMode::PESSIMISTIC_WRITE);
             if (!$turno) {
-                throw new Exception('Appointment not found');
+                throw new Exception('Cita no encontrada');
             }
 
-            // Validate that the appointment is in the workshop
+            // Validar que la cita esté en el taller
             if ($turno->getEstado() !== Turno::ESTADO_EN_TALLER) {
-                throw new Exception('Only appointments in workshop can be finalized');
+                throw new Exception('Solo las citas en taller pueden ser finalizadas');
             }
 
-            // Change appointment state to finalized
+            // Cambiar estado de la cita a finalizado
             $turno->setEstado(Turno::ESTADO_FINALIZADO);
 
-            // Promote the next waiting appointment to workshop
+            // Promocionar la siguiente cita en espera al taller
             $siguienteTurno = $this->em->createQuery(
                 'SELECT t FROM App\Entities\Turno t
                  WHERE t.taller = :taller AND t.estado = :estado
@@ -158,39 +176,39 @@ class TurnoService
             ])->setMaxResults(1)->getOneOrNullResult();
 
             if ($siguienteTurno) {
-                // State transition: waiting to in workshop
+                // Transición de estado: esperando a en taller
                 $siguienteTurno->setEstado(Turno::ESTADO_EN_TALLER);
             }
 
-            // Commit all changes
+            // Confirmar todos los cambios
             $this->em->flush();
             $this->em->commit();
         } catch (Exception $e) {
-            // Rollback on error
+            // Rollback en error
             $this->em->rollback();
             throw $e;
         }
     }
 
     /**
-     * Retrieves the current state of a workshop, including active appointments.
+     * Obtiene el estado actual de un taller, incluyendo citas activas.
      *
-     * Returns information about the workshop's capacity and lists appointments that are
-     * either in the workshop or waiting, excluding finalized ones.
+     * Retorna información sobre la capacidad del taller y listas de citas que están
+     * en el taller o esperando, excluyendo las finalizadas.
      *
-     * @param int $tallerId The ID of the workshop to query.
-     * @return array Array containing workshop name, capacity, and lists of appointments in workshop and waiting.
-     * @throws Exception If the workshop is not found.
+     * @param int $tallerId El ID del taller a consultar.
+     * @return array Array que contiene nombre del taller, capacidad, y listas de citas en taller y esperando.
+     * @throws Exception Si el taller no se encuentra.
      */
     public function obtenerEstadoTaller(int $tallerId): array
     {
-        // Find the workshop entity
+        // Encontrar la entidad del taller
         $taller = $this->em->find(Taller::class, $tallerId);
         if (!$taller) {
-            throw new Exception('Workshop not found');
+            throw new Exception('Taller no encontrado');
         }
 
-        // Query active appointments (not finalized) for this workshop
+        // Consultar citas activas (no finalizadas) para este taller
         $turnos = $this->em->createQuery(
             'SELECT t FROM App\Entities\Turno t
              WHERE t.taller = :taller AND t.estado != :finalizado
@@ -203,7 +221,7 @@ class TurnoService
         $enTaller = [];
         $enEspera = [];
 
-        // Categorize appointments by state
+        // Categorizar citas por estado
         foreach ($turnos as $turno) {
             $data = [
                 'numeroTurno' => $turno->getNumeroTurno(),
@@ -226,25 +244,25 @@ class TurnoService
     }
 
     /**
-     * Lists appointments for a specific workshop with optional filtering.
+     * Lista citas para un taller específico con filtrado opcional.
      *
-     * Retrieves and formats appointments associated with the given workshop,
-     * with options to filter by state or license plate.
+     * Recupera y formatea citas asociadas con el taller dado,
+     * con opciones para filtrar por estado o patente.
      *
-     * @param int $tallerId The ID of the workshop whose appointments to list.
-     * @param array $filtros Optional filters: 'estado' (default excludes FINALIZADO), 'patente'.
-     * @return array Array of appointment data arrays, each containing full appointment details.
-     * @throws Exception If the workshop is not found.
+     * @param int $tallerId El ID del taller cuyas citas listar.
+     * @param array $filtros Filtros opcionales: 'estado' (por defecto excluye FINALIZADO), 'patente'.
+     * @return array Array de arrays de datos de citas, cada uno conteniendo detalles completos de la cita.
+     * @throws Exception Si el taller no se encuentra.
      */
     public function listarTurnosTaller(int $tallerId, array $filtros = []): array
     {
-        // Find the workshop entity
+        // Encontrar la entidad del taller
         $taller = $this->em->find(Taller::class, $tallerId);
         if (!$taller) {
-            throw new Exception('Workshop not found');
+            throw new Exception('Taller no encontrado');
         }
 
-        // Build query with filters
+        // Construir consulta con filtros
         $qb = $this->em->createQueryBuilder();
         $qb->select('t')
            ->from('App\Entities\Turno', 't')
@@ -252,13 +270,13 @@ class TurnoService
            ->setParameter('taller', $taller)
            ->orderBy('t.numeroTurno', 'ASC');
 
-        // If patente is provided, show all states, else exclude FINALIZADO
+        // Si se proporciona patente, mostrar todos los estados, sino excluir FINALIZADO
         if (!isset($filtros['patente']) || empty($filtros['patente'])) {
             $qb->andWhere('t.estado != :finalizado')
                ->setParameter('finalizado', Turno::ESTADO_FINALIZADO);
         }
 
-        // Filter by patente if provided
+        // Filtrar por patente si se proporciona
         if (isset($filtros['patente']) && !empty($filtros['patente'])) {
             $qb->andWhere('t.patente LIKE :patente')
                ->setParameter('patente', '%' . $filtros['patente'] . '%');
@@ -266,7 +284,7 @@ class TurnoService
 
         $turnos = $qb->getQuery()->getResult();
 
-        // Format appointment data for response
+        // Formatear datos de citas para respuesta
         return array_map(function(Turno $turno) {
             return [
                 'id' => $turno->getId(),

@@ -7,15 +7,31 @@ use App\Validators\TurnoValidator;
 use Exception;
 
 /**
- * TallerController handles operations related to workshop turns, such as creating turns and retrieving workshop status.
+ * TallerController maneja operaciones relacionadas con turnos de talleres, como crear turnos y obtener el estado del taller.
+ *
+ * Propósito general:
+ * - Proporcionar endpoints públicos para que los clientes creen turnos sin autenticación.
+ * - Mostrar el estado actual del taller (cola de turnos, etc.).
+ *
+ * Dependencias:
+ * - Utiliza TurnoService para la lógica de negocio de turnos.
+ * - Usa ApiResponse para enviar respuestas estandarizadas.
+ * - Usa TurnoValidator para validar datos de entrada.
+ *
+ * Interacciones con otras capas:
+ * - Recibe solicitudes HTTP desde index.php para operaciones públicas.
+ * - Delega creación y consulta de turnos al servicio correspondiente.
+ * - Valida entradas antes de procesar para asegurar integridad de datos.
+ * - Envía respuestas JSON con detalles de turnos o estado.
+ * - Lanza excepciones que son manejadas por ErrorHandler.
  */
 class TallerController
 {
-    /** @var TurnoService Service for managing turn-related operations */
+    /** @var TurnoService Servicio para gestionar operaciones relacionadas con turnos */
     private TurnoService $turnoService;
 
     /**
-     * Constructor initializes the turn service using the global entity manager.
+     * Constructor inicializa el servicio de turnos usando el entity manager global.
      */
     public function __construct()
     {
@@ -23,58 +39,58 @@ class TallerController
     }
 
     /**
-     * Creates a new turn for a specific workshop after validating input data.
-     * @param int $tallerId The ID of the workshop
+     * Crea un nuevo turno para un taller específico después de validar los datos de entrada.
+     * @param int $tallerId El ID del taller
      * @return void
      */
     public function crearTurno(int $tallerId): void
     {
         try {
-            // Decode JSON input from the request body
+            // Decodificar entrada JSON del cuerpo de la solicitud
             $input = json_decode(file_get_contents('php://input'), true);
 
-            // Check if JSON is valid
+            // Verificar si el JSON es válido
             if (!$input) {
-                ApiResponse::error('Invalid JSON', 400);
+                ApiResponse::error('JSON inválido', 400);
                 return;
             }
 
-            // Validate turn input
+            // Validar entrada de turno
             $errors = TurnoValidator::validate($input);
             if (!empty($errors)) {
                 ApiResponse::error(implode(', ', $errors), 400);
                 return;
             }
 
-            // Create the turn using the turn service
+            // Crear el turno usando el servicio de turnos
             $turno = $this->turnoService->crearTurno($tallerId, $input);
 
-            // Return success response with turn details
+            // Retornar respuesta de éxito con detalles del turno
             ApiResponse::success([
                 'id' => $turno->getId(),
                 'numeroTurno' => $turno->getNumeroTurno(),
                 'estado' => $turno->getEstado()
             ], 201);
         } catch (Exception $e) {
-            // Re-throw exceptions for higher-level handling
+            // Re-lanzar excepciones para manejo de nivel superior
             throw $e;
         }
     }
 
     /**
-     * Retrieves the current status of a workshop.
-     * @param int $tallerId The ID of the workshop
+     * Obtiene el estado actual de un taller.
+     * @param int $tallerId El ID del taller
      * @return void
      */
     public function obtenerEstado(int $tallerId): void
     {
         try {
-            // Retrieve the workshop status using the turn service
+            // Obtener el estado del taller usando el servicio de turnos
             $estado = $this->turnoService->obtenerEstadoTaller($tallerId);
-            // Return success response with status data
+            // Retornar respuesta de éxito con datos de estado
             ApiResponse::success($estado);
         } catch (Exception $e) {
-            // Re-throw exceptions for higher-level handling
+            // Re-lanzar excepciones para manejo de nivel superior
             throw $e;
         }
     }
