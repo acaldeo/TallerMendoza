@@ -8,6 +8,8 @@ use DateTime;
 #[ORM\Table(name: 'turnos')]
 #[ORM\Index(name: 'idx_taller_estado', columns: ['taller_id', 'estado'])]
 #[ORM\Index(name: 'idx_taller_numero', columns: ['taller_id', 'numeroTurno'])]
+#[ORM\UniqueConstraint(name: 'unique_patente', columns: ['patente'])]
+#[ORM\UniqueConstraint(name: 'unique_taller_numero', columns: ['taller_id', 'numeroTurno'])]
 /**
  * Entidad que representa un turno (cita) en un taller.
  * Gestiona los detalles del turno incluyendo información del cliente, vehículo, descripción del problema y estado.
@@ -71,8 +73,8 @@ class Turno
       * Stored as a string with max length 10.
       */
      #[ORM\Column(type: 'string', length: 10, nullable: true)]
-     private ?string $patente;
-
+     private string $patente;
+     
     /**
      * Description of the problem with the vehicle.
      * Stored as text, allowing longer descriptions.
