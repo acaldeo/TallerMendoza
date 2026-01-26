@@ -1,0 +1,23 @@
+rules:
+  - id: php-sql-injection
+    patterns:
+      - pattern: $DB->query($X)
+    message: "Posible SQL Injection detectada"
+    languages: [php]
+    severity: ERROR
+
+  - id: php-unsanitized-input
+    patterns:
+      - pattern: $_GET[$X]
+      - pattern: $_POST[$X]
+    message: "Input de usuario sin sanitizar"
+    languages: [php]
+    severity: WARNING
+
+  - id: php-hardcoded-secret
+    patterns:
+      - pattern: "password = \"$X\""
+      - pattern: "api_key = \"$X\""
+    message: "Secreto hardcodeado"
+    languages: [php]
+    severity: ERROR
