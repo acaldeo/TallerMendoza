@@ -12,11 +12,14 @@ if (strpos($requestUri, '/taller/tallerApi') === 0) {
     // Include the API index
     require_once 'tallerApi/index.php';
 } else {
-    // Serve static files
+    // Serve static files with path traversal protection
     $file = __DIR__ . $requestUri;
-    if (file_exists($file) && !is_dir($file)) {
+    // Resolve the real path to prevent directory traversal
+    $realFile = realpath($file);
+    // Ensure the file is within the document root
+    if ($realFile && strpos($realFile, __DIR__) === 0 && file_exists($realFile) && !is_dir($realFile)) {
         // Set content type based on extension
-        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        $ext = pathinfo($realFile, PATHINFO_EXTENSION);
         $contentTypes = [
             'html' => 'text/html',
             'css' => 'text/css',
@@ -30,7 +33,7 @@ if (strpos($requestUri, '/taller/tallerApi') === 0) {
         if (isset($contentTypes[$ext])) {
             header('Content-Type: ' . $contentTypes[$ext]);
         }
-        readfile($file);
+        readfile($realFile);
     } else {
         // Fallback to index.html
         header('Content-Type: text/html');

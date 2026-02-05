@@ -156,10 +156,13 @@ createApp({
             toastEl.className = 'toast align-items-center text-white bg-success border-0';
             toastEl.innerHTML = `
                 <div class="d-flex">
-                    <div class="toast-body">${message}</div>
+                    <div class="toast-body"></div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             `;
+            // Set message text safely to prevent XSS
+            const bodyEl = toastEl.querySelector('.toast-body');
+            bodyEl.textContent = message;
             // Append toast to body and show it
             document.body.appendChild(toastEl);
             const toast = new bootstrap.Toast(toastEl);
@@ -167,7 +170,7 @@ createApp({
 
             // Remove toast from DOM after it's hidden
             toastEl.addEventListener('hidden.bs.toast', () => {
-                document.body.removeChild(toastEl);
+                toastEl.remove();
             });
         };
 
@@ -355,7 +358,7 @@ createApp({
                     Object.assign(emailConfig, data.configuracion);
                 }
             } catch (err) {
-                console.log('No hay configuración de email');
+                errorEmail.value = err.message;
             }
         };
         

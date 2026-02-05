@@ -115,10 +115,10 @@ class AdminController
             // Verificar que el usuario tiene acceso al taller
             AuthMiddleware::requireTallerAccess($tallerId);
 
-            // Obtener filtros de parámetros de consulta
+            // Obtener filtros de parámetros de consulta, sanitizando para prevenir XSS
             $filtros = [];
             if (isset($_GET['patente'])) {
-                $filtros['patente'] = $_GET['patente'];
+                $filtros['patente'] = htmlspecialchars(trim($_GET['patente']), ENT_QUOTES, 'UTF-8');
             }
 
             // Recuperar turnos del taller con filtros

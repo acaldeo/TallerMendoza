@@ -31,8 +31,12 @@ use App\Utils\ApiResponse;
 use App\Utils\ErrorHandler;
 
 // Configurar encabezados CORS para permitir solicitudes de origen cruzado
-// Esto permite que el frontend (posiblemente en otro dominio) acceda a la API
-header('Access-Control-Allow-Origin: *');
+// Whitelist de orígenes permitidos para seguridad
+$allowedOrigins = ['https://tallermendoza.com', 'http://localhost', 'http://127.0.0.1'];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+}
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');

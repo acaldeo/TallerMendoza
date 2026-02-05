@@ -24,41 +24,59 @@ namespace App\Validators;
 class TurnoValidator
 {
     /**
-     * Valida datos para la creación de turno.
+     * Sanitiza una cadena de texto para prevenir XSS.
+     * @param string $input La cadena a sanitizar.
+     * @return string La cadena sanitizada.
+     */
+    private static function sanitizeString(string $input): string
+    {
+        return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Valida y sanitiza datos para la creación de turno.
      *
      * Verifica campos requeridos: nombreCliente (mín 2 chars), telefono (8-15 dígitos), modeloVehiculo, patente.
      * Campo opcional: descripcionProblema (máx 255 chars si presente).
+     * Sanitiza strings para prevenir XSS.
      *
-     * @param array $data Los datos de entrada para creación de turno.
+     * @param array $data Los datos de entrada para creación de turno (modificado por referencia para sanitizar).
      * @return array Un array de mensajes de error; vacío si la validación pasa.
      */
-    public static function validate(array $data): array
+    public static function validate(array &$data): array
     {
         $errors = []; // Inicializar array para recolectar errores de validación
 
-        // Validar nombreCliente: debe estar presente y tener al menos 2 caracteres después de trim
-        if (empty($data['nombreCliente']) || strlen(trim($data['nombreCliente'])) < 2) {
+        // Sanitizar y validar nombreCliente
+        $data['nombreCliente'] = self::sanitizeString($data['nombreCliente'] ?? '');
+        if (empty($data['nombreCliente']) || strlen($data['nombreCliente']) < 2) {
             $errors[] = 'El nombre del cliente debe tener al menos 2 caracteres';
         }
 
         // Validar telefono: debe estar presente y coincidir con patrón de 8-15 dígitos
+        $data['telefono'] = trim($data['telefono'] ?? '');
         if (empty($data['telefono']) || !preg_match('/^\d{8,15}$/', $data['telefono'])) {
             $errors[] = 'El número de teléfono debe contener entre 8 y 15 dígitos';
         }
 
-        // Validar modeloVehiculo: debe estar presente y no vacío
+        // Sanitizar y validar modeloVehiculo
+        $data['modeloVehiculo'] = self::sanitizeString($data['modeloVehiculo'] ?? '');
         if (empty($data['modeloVehiculo'])) {
             $errors[] = 'El modelo del vehículo es requerido';
         }
 
-        // Validar patente: debe estar presente y no vacía
+        // Sanitizar y validar patente
+        $data['patente'] = self::sanitizeString($data['patente'] ?? '');
         if (empty($data['patente'])) {
             $errors[] = 'La patente del vehículo es requerida';
         }
 
-        // Validar descripcionProblema: si está presente, no debe exceder 255 caracteres
-        if (isset($data['descripcionProblema']) && strlen($data['descripcionProblema']) > 255) {
-            $errors[] = 'La descripción del problema no puede exceder 255 caracteres';
+        // Sanitizar descripcionProblema si presente
+        if (isset($data['descripcionProblema'])) {
+            $data['descripcionProblema'] = self::sanitizeString($data['descripcionProblema']);
+            if (strlen($data['descripcionProblema']) > 255) {
+                $errors[] = 'La descripción del problema no puede exceder 255 caracteres';
+            }
         }
 
         return $errors; // Retornar el array de errores; vacío si no hay errores
