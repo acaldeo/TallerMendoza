@@ -20,6 +20,12 @@ createApp({
             emailDestino: '',
             activo: false
         });
+
+        // Reactive state for logo
+        const tallerLogo = ref(null);
+        const logoUrl = ref(null);
+        const loadingLogo = ref(false);
+        const errorLogo = ref('');
         // Reactive state for loading indicator
         const loading = ref(false);
         // Reactive state for email-specific loading indicator
@@ -395,6 +401,81 @@ createApp({
             }
         };
 
+        // === LOGO MANAGEMENT ===
+
+        const cargarLogo = async () => {
+            if (!user.value) return;
+
+            try {
+                const data = await api.obtenerLogo(user.value.tallerId);
+                tallerLogo.value = data.logo;
+                // Construir URL del logo
+                if (data.logo) {
+                    logoUrl.value = `/taller/tallerApi/uploads/logos/${data.logo}`;
+                } else {
+                    logoUrl.value = null;
+                }
+            } catch (err) {
+                errorLogo.value = err.message;
+            }
+        };
+
+        const subirLogo = async (event) => {
+            const archivo = event.target.files[0];
+            if (!archivo) return;
+
+            // Validar tipo de archivo
+            const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!tiposPermitidos.includes(archivo.type)) {
+                errorLogo.value = 'Tipo de archivo no permitido. Solo se permiten: JPG, PNG, GIF, WEBP';
+                return;
+            }
+
+            // Validar tamaño (2MB)
+            if (archivo.size > 2 * 1024 * 1024) {
+                errorLogo.value = 'El archivo es demasiado grande. Máximo 2MB';
+                return;
+            }
+
+            try {
+                loadingLogo.value = true;
+                errorLogo.value = null;
+
+                await api.subirLogoTaller(user.value.tallerId, archivo);
+
+                // Recargar logo
+                await cargarLogo();
+
+                showSuccess('Logo subido correctamente');
+            } catch (err) {
+                errorLogo.value = err.message;
+            } finally {
+                loadingLogo.value = false;
+            }
+        };
+
+        const eliminarLogo = async () => {
+            if (!confirm('¿Estás seguro de eliminar el logo del taller?')) {
+                return;
+            }
+
+            try {
+                loadingLogo.value = true;
+                errorLogo.value = null;
+
+                await api.eliminarLogoTaller(user.value.tallerId);
+
+                tallerLogo.value = null;
+                logoUrl.value = null;
+
+                showSuccess('Logo eliminado correctamente');
+            } catch (err) {
+                errorLogo.value = err.message;
+            } finally {
+                loadingLogo.value = false;
+            }
+        };
+
         // Watch for changes in filtroPatente to apply filters
         Vue.watch(filtroPatente, aplicarFiltros);
 
@@ -406,6 +487,7 @@ createApp({
                 if (user.value) {
                     cargarUsuarios();
                     cargarConfiguracionEmail();
+                    cargarLogo();
                 }
             });
         });
@@ -429,12 +511,17 @@ createApp({
             userForm,
             passwordForm,
             filtroPatente,
+            tallerLogo,
+            logoUrl,
+            loadingLogo,
+            errorLogo,
             isLoggedIn,
             login,
             logout,
             cargarTurnos,
             cargarUsuarios,
             cargarConfiguracionEmail,
+            cargarLogo,
             finalizarTurno,
             crearUsuario,
             actualizarPassword,
@@ -445,6 +532,8 @@ createApp({
             limpiarFiltros,
             guardarConfiguracionEmail,
             probarEmail,
+            subirLogo,
+            eliminarLogo,
             getEstadoClass,
             getEstadoBadgeClass,
             puedeFinalizarTurno,

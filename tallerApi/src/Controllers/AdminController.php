@@ -36,6 +36,7 @@ use App\Middleware\AuthMiddleware;
 use App\Utils\ApiResponse;
 use App\Validators\AuthValidator;
 use App\Validators\UsuarioValidator;
+use App\Entities\Taller;
 use Exception;
 
 class AdminController
@@ -405,6 +406,158 @@ class AdminController
             }
         } catch (Exception $e) {
             // Re-lanzar excepciones para manejo de nivel superior
+            throw $e;
+        }
+    }
+
+    // === GESTIÓN DE LOGO DEL TALLER ===
+
+    /**
+     * Sube el logo de un taller.
+     * @param int $tallerId El ID del taller
+     * @return void
+     */
+    public function subirLogo(int $tallerId): void
+    {
+        try {
+            // Verificar acceso al taller
+            AuthMiddleware::requireTallerAccess($tallerId);
+
+            // Verificar que se envió un archivo
+            if (!isset($_FILES['logo']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
+                $error = $_FILES['logo']['error'] ?? 'No se recibió ningún archivo';
+                ApiResponse::error($error, 400);
+                return;
+            }
+
+            $archivo = $_FILES['logo'];
+
+            // Validar tipo de archivo (solo imágenes)
+            $extensionesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($extension, $extensionesPermitidas)) {
+                ApiResponse::error('Tipo de archivo no permitido. Solo se permiten: jpg, jpeg, png, gif, webp', 400);
+                return;
+            }
+
+            // Validar tamaño (2MB máximo)
+            $tamanoMaximo = 2 * 1024 * 1024; // 2MB
+            if ($archivo['size'] > $tamanoMaximo) {
+                ApiResponse::error('El archivo es demasiado grande. Máximo 2MB', 400);
+                return;
+            }
+
+            // Obtener el taller
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            // Eliminar logo anterior si existe
+            $logoAnterior = $taller->getLogo();
+            if ($logoAnterior) {
+                $rutaAnterior = __DIR__ . '/../../uploads/logos/' . $logoAnterior;
+                if (file_exists($rutaAnterior)) {
+                    unlink($rutaAnterior);
+                }
+            }
+
+            // Generar nombre único para el archivo
+            $nombreArchivo = 'logo_' . $tallerId . '_' . uniqid() . '.' . $extension;
+            $rutaDestino = __DIR__ . '/../../uploads/logos/' . $nombreArchivo;
+
+            // Mover el archivo
+            if (!move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
+                ApiResponse::error('Error al guardar el archivo', 500);
+                return;
+            }
+
+            // Guardar nombre del archivo en la base de datos
+            $taller->setLogo($nombreArchivo);
+            $em->flush();
+
+            ApiResponse::success([
+                'logo' => $nombreArchivo,
+                'message' => 'Logo subido correctamente'
+            ]);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Elimina el logo de un taller.
+     * @param int $tallerId El ID del taller
+     * @return void
+     */
+    public function eliminarLogo(int $tallerId): void
+    {
+        try {
+            // Verificar acceso al taller
+            AuthMiddleware::requireTallerAccess($tallerId);
+
+            // Obtener el taller
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            $logoActual = $taller->getLogo();
+
+            if (!$logoActual) {
+                ApiResponse::error('El taller no tiene un logo configurado', 400);
+                return;
+            }
+
+            // Eliminar archivo físico
+            $rutaArchivo = __DIR__ . '/../../uploads/logos/' . $logoActual;
+            if (file_exists($rutaArchivo)) {
+                unlink($rutaArchivo);
+            }
+
+            // Eliminar referencia en base de datos
+            $taller->setLogo(null);
+            $em->flush();
+
+            ApiResponse::success([
+                'message' => 'Logo eliminado correctamente'
+            ]);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Obtiene el logo de un taller.
+     * @param int $tallerId El ID del taller
+     * @return void
+     */
+    public function obtenerLogo(int $tallerId): void
+    {
+        try {
+            // Verificar acceso al taller
+            AuthMiddleware::requireTallerAccess($tallerId);
+
+            // Obtener el taller
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            ApiResponse::success([
+                'logo' => $taller->getLogo()
+            ]);
+        } catch (Exception $e) {
             throw $e;
         }
     }

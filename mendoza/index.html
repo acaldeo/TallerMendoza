@@ -59,7 +59,14 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body text-center">
-                               <!-- <img src="logoMendoza.png" alt="Logo Mendoza" class="mb-3" style="height: 60px;">-->
+                                <!-- Logo del taller -->
+                                <img 
+                                    v-if="estado.logo" 
+                                    :src="'/taller/tallerApi/uploads/logos/' + estado.logo" 
+                                    alt="Logo" 
+                                    class="mb-3"
+                                    style="height: 80px; object-fit: contain;"
+                                >
                                 <h2 class="card-title">{{ estado.taller }}</h2>
                                 <p class="card-text text-muted">
                                     Capacidad: {{ estado.capacidad }} turnos simultáneos

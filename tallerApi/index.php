@@ -169,6 +169,31 @@ try {
             $controller = new AdminController();
             $controller->probarConfiguracionEmail($tallerId);
         }
+    } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/logo$#', $path, $matches)) {
+        $tallerId = (int)$matches[1];
+        if ($requestMethod === 'GET') {
+            // Obtener el logo del taller (requiere autenticación)
+            AuthMiddleware::requireAuth();
+            $controller = new AdminController();
+            $controller->obtenerLogo($tallerId);
+        } elseif ($requestMethod === 'POST') {
+            // Subir el logo del taller (requiere autenticación)
+            AuthMiddleware::requireAuth();
+            $controller = new AdminController();
+            $controller->subirLogo($tallerId);
+        } elseif ($requestMethod === 'DELETE') {
+            // Eliminar el logo del taller (requiere autenticación)
+            AuthMiddleware::requireAuth();
+            $controller = new AdminController();
+            $controller->eliminarLogo($tallerId);
+        }
+    } elseif (preg_match('#^/api/v1/taller/(\d+)/logo$#', $path, $matches)) {
+        $tallerId = (int)$matches[1];
+        if ($requestMethod === 'GET') {
+            // Obtener el logo del taller (público)
+            $controller = new TallerController();
+            $controller->obtenerLogo($tallerId);
+        }
     } elseif ($path === '/api/v1/admin/talleres' && $requestMethod === 'POST') {
         // Requiere autenticación
         // Crear un nuevo taller en el sistema

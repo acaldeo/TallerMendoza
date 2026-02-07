@@ -1,0 +1,15 @@
+# Proteger contra ejecución de archivos PHP
+# Denegar acceso a todos los archivos PHP
+<FilesMatch "\.ph(p[3457]?|t|tml|ar)$">
+    Deny from all
+</FilesMatch>
+
+# Permitir solo imágenes
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
+    Allow from all
+</FilesMatch>
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

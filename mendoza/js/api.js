@@ -145,4 +145,41 @@ class ApiService {
             body: JSON.stringify(tallerData)
         });
     }
+
+    // Logo management endpoints
+    // Get logo for a taller (public)
+    async obtenerLogoTaller(tallerId) {
+        return this.request(`/api/v1/taller/${tallerId}/logo`);
+    }
+
+    // Get logo for a taller (admin - with auth)
+    async obtenerLogo(tallerId) {
+        return this.request(`/api/v1/admin/taller/${tallerId}/logo`);
+    }
+
+    // Upload logo for a taller (admin - with auth)
+    async subirLogoTaller(tallerId, archivo) {
+        const formData = new FormData();
+        formData.append('logo', archivo);
+
+        const url = `${this.baseUrl}/api/v1/admin/taller/${tallerId}/logo`;
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Error al subir el logo');
+        }
+        return data.data;
+    }
+
+    // Delete logo for a taller (admin - with auth)
+    async eliminarLogoTaller(tallerId) {
+        return this.request(`/api/v1/admin/taller/${tallerId}/logo`, {
+            method: 'DELETE'
+        });
+    }
 }

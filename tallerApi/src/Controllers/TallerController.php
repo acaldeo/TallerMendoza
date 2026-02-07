@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Services\TurnoService;
 use App\Utils\ApiResponse;
 use App\Validators\TurnoValidator;
+use App\Entities\Taller;
 use Exception;
 
 /**
@@ -85,12 +86,61 @@ class TallerController
     public function obtenerEstado(int $tallerId): void
     {
         try {
+            // Obtener el taller para incluir el logo
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
             // Obtener el estado del taller usando el servicio de turnos
             $estado = $this->turnoService->obtenerEstadoTaller($tallerId);
+
+            // Agregar información del taller incluyendo el logo
+            $estado['taller'] = $taller->getNombre();
+            $estado['logo'] = $taller->getLogo();
+
             // Retornar respuesta de éxito con datos de estado
             ApiResponse::success($estado);
         } catch (Exception $e) {
             // Re-lanzar excepciones para manejo de nivel superior
+            throw $e;
+        }
+    }
+
+    /**
+     * Obtiene el logo de un taller (endpoint público).
+     * @param int $tallerId El ID del taller
+     * @return void
+     */
+    public function obtenerLogo(int $tallerId): void
+    {
+        try {
+            // Obtener el taller
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            $logo = $taller->getLogo();
+            $logoUrl = null;
+
+            if ($logo) {
+                // Construir URL del logo
+                $baseUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'];
+                $logoUrl = $baseUrl . '/taller/tallerApi/uploads/logos/' . $logo;
+            }
+
+            ApiResponse::success([
+                'logo' => $logo,
+                'logoUrl' => $logoUrl
+            ]);
+        } catch (Exception $e) {
             throw $e;
         }
     }

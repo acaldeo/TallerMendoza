@@ -52,6 +52,13 @@ class Taller
     private int $capacidad = 3;
 
     /**
+     * Ruta o nombre del archivo de logo del taller.
+     * Almacena el nombre del archivo de imagen del logo.
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $logo = null;
+
+    /**
      * Colección de turnos (Turno) asociados con este taller.
      * Relación uno-a-muchos, mapeada por 'taller' en la entidad Turno.
      */
@@ -126,6 +133,28 @@ class Taller
     public function setCapacidad(int $capacidad): self
     {
         $this->capacidad = $capacidad;
+        return $this;
+    }
+
+    /**
+     * Obtiene la ruta del logo del taller.
+     *
+     * @return string|null La ruta del logo o null si no tiene.
+     */
+    public function getLogo(): ?string
+    {
+        return $this->logo;
+    }
+
+    /**
+     * Establece la ruta del logo del taller.
+     *
+     * @param string|null $logo La ruta del logo.
+     * @return self Retorna la instancia para encadenamiento de métodos.
+     */
+    public function setLogo(?string $logo): self
+    {
+        $this->logo = $logo;
         return $this;
     }
 
