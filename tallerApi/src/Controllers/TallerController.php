@@ -144,4 +144,35 @@ class TallerController
             throw $e;
         }
     }
+
+    /**
+     * Lista todos los talleres disponibles para solicitar turno.
+     * @return void
+     */
+    public function listarTalleres(): void
+    {
+        try {
+            $em = $GLOBALS['entityManager'];
+            $talleres = $em->getRepository(Taller::class)->findAll();
+
+            $result = array_map(function(Taller $taller) {
+                $logoUrl = null;
+                if ($taller->getLogo()) {
+                    $baseUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'];
+                    $logoUrl = $baseUrl . '/taller/tallerApi/uploads/logos/' . $taller->getLogo();
+                }
+                return [
+                    'id' => $taller->getId(),
+                    'nombre' => $taller->getNombre(),
+                    'capacidad' => $taller->getCapacidad(),
+                    'logo' => $taller->getLogo(),
+                    'logoUrl' => $logoUrl
+                ];
+            }, $talleres);
+
+            ApiResponse::success($result);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 }

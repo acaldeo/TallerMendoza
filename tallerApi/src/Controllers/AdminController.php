@@ -37,6 +37,9 @@ use App\Utils\ApiResponse;
 use App\Validators\AuthValidator;
 use App\Validators\UsuarioValidator;
 use App\Entities\Taller;
+use App\Entities\Turno;
+use App\Entities\Usuario;
+use App\Entities\ConfiguracionEmail;
 use Exception;
 
 class AdminController
@@ -87,15 +90,27 @@ class AdminController
                 return;
             }
 
+            // Verificar que no sea el usuario "admin"
+            if (strtolower($input['usuario']) === 'admin') {
+                ApiResponse::error('El usuario "admin" no está permitido. Use otro nombre de usuario.', 403);
+                return;
+            }
+
             // Intentar login usando el servicio de autenticación
             $user = $this->authService->login($input['usuario'], $input['password']);
+
+            // Obtener datos del taller si existe
+            $taller = $user->getTaller();
+            $tallerId = $taller ? $taller->getId() : null;
+            $tallerNombre = $taller ? $taller->getNombre() : null;
 
             // Retornar respuesta de éxito con detalles del usuario
             ApiResponse::success([
                 'id' => $user->getId(),
                 'usuario' => $user->getUsuario(),
-                'tallerId' => $user->getTaller()->getId(),
-                'tallerNombre' => $user->getTaller()->getNombre()
+                'rol' => $user->getRol(),
+                'tallerId' => $tallerId,
+                'tallerNombre' => $tallerNombre
             ]);
         } catch (Exception $e) {
             // Manejar errores de autenticación
@@ -338,7 +353,8 @@ class AdminController
     }
 
     /**
-     * Crea un nuevo taller en el sistema.
+     * Crea un nuevo taller y lo asigna al usuario actual.
+     * Solo el usuario "acaldeo" puede crear talleres.
      * @return void
      */
     public function crearTaller(): void
@@ -346,6 +362,20 @@ class AdminController
         try {
             // Requerir autenticación
             AuthMiddleware::requireAuth();
+
+            $em = $GLOBALS['entityManager'];
+            $user = $this->authService->getCurrentUser();
+
+            if (!$user) {
+                ApiResponse::error('Usuario no encontrado', 404);
+                return;
+            }
+
+            // Solo "acaldeo" puede crear talleres
+            if ($user->getUsuario() !== 'acaldeo') {
+                ApiResponse::error('Solo el usuario acaldeo puede crear talleres', 403);
+                return;
+            }
 
             // Decodificar entrada JSON del cuerpo de la solicitud
             $input = json_decode(file_get_contents('php://input'), true);
@@ -362,24 +392,262 @@ class AdminController
                 return;
             }
 
+            // Validar usuario y contraseña si se proporcionan
+            if (empty($input['usuario']) || empty($input['password'])) {
+                ApiResponse::error('Usuario y contraseña son requeridos para crear el administrador del taller', 400);
+                return;
+            }
+
+            // Verificar que no sea el usuario "admin"
+            if (strtolower($input['usuario']) === 'admin') {
+                ApiResponse::error('El usuario "admin" no está permitido. Use otro nombre de usuario.', 400);
+                return;
+            }
+
             // Crear entidad taller
             $taller = new \App\Entities\Taller();
             $taller->setNombre($input['nombre'])
                    ->setCapacidad((int)$input['capacidad']);
 
-            // Persistir en la base de datos
-            $em = $GLOBALS['entityManager'];
+            // Persistir el taller
             $em->persist($taller);
+            $em->flush();
+
+            // Crear usuario administrador para el taller
+            $usuario = new \App\Entities\Usuario();
+            $usuario->setTaller($taller)
+                    ->setUsuario($input['usuario'])
+                    ->setPasswordHash(password_hash($input['password'], PASSWORD_DEFAULT));
+
+            $em->persist($usuario);
             $em->flush();
 
             // Retornar respuesta de éxito
             ApiResponse::success([
                 'id' => $taller->getId(),
                 'nombre' => $taller->getNombre(),
-                'capacidad' => $taller->getCapacidad()
+                'capacidad' => $taller->getCapacidad(),
+                'usuario' => [
+                    'id' => $usuario->getId(),
+                    'usuario' => $usuario->getUsuario()
+                ]
             ], 201);
         } catch (Exception $e) {
             // Re-lanzar excepciones para manejo de nivel superior
+            throw $e;
+        }
+    }
+
+    /**
+     * Elimina un taller con todos sus datos relacionados (turnos, usuarios, configuración de email, logo).
+     * @return void
+     */
+    public function eliminarTaller(): void
+    {
+        try {
+            // Requerir autenticación
+            AuthMiddleware::requireAuth();
+
+            // Obtener el taller del usuario actual
+            $em = $GLOBALS['entityManager'];
+            $user = $this->authService->getCurrentUser();
+
+            if (!$user) {
+                ApiResponse::error('Usuario no encontrado', 404);
+                return;
+            }
+
+            $taller = $user->getTaller();
+            if (!$taller) {
+                ApiResponse::error('No tiene un taller asignado', 400);
+                return;
+            }
+
+            $tallerId = $taller->getId();
+
+            // Eliminar taller
+            $this->eliminarTallerPorId($tallerId, $em);
+
+            // Destruir la sesión si es el usuario actual
+            if ($user->getUsuario() !== 'acaldeo') {
+                session_destroy();
+            }
+
+            ApiResponse::success(['message' => 'Taller eliminado correctamente']);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Elimina un taller por su ID (para super usuario acaldeo).
+     * @param int $tallerId El ID del taller a eliminar
+     * @param mixed $em EntityManager (opcional)
+     * @return void
+     */
+    public function eliminarTallerPorId(int $tallerId = null, $em = null): void
+    {
+        try {
+            // Requerir autenticación
+            AuthMiddleware::requireAuth();
+
+            $em = $em ?? $GLOBALS['entityManager'];
+            $user = $this->authService->getCurrentUser();
+
+            if (!$user) {
+                ApiResponse::error('Usuario no encontrado', 404);
+                return;
+            }
+
+            // Solo "acaldeo" puede eliminar talleres por ID
+            if ($user->getUsuario() !== 'acaldeo') {
+                ApiResponse::error('Solo el usuario acaldeo puede eliminar talleres por ID', 403);
+                return;
+            }
+
+            // Obtener el taller por ID
+            $taller = $em->find(Taller::class, $tallerId);
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            // 1. Eliminar todos los turnos del taller
+            $turnos = $em->getRepository(Turno::class)->findBy(['taller' => $taller]);
+            foreach ($turnos as $turno) {
+                $em->remove($turno);
+            }
+
+            // 2. Eliminar todos los usuarios del taller
+            $usuarios = $em->getRepository(Usuario::class)->findBy(['taller' => $taller]);
+            foreach ($usuarios as $usuario) {
+                $em->remove($usuario);
+            }
+
+            // 3. Eliminar la configuración de email si existe
+            $configEmail = $em->getRepository(ConfiguracionEmail::class)->findOneBy(['taller' => $taller]);
+            if ($configEmail) {
+                $em->remove($configEmail);
+            }
+
+            // 4. Eliminar el logo si existe
+            $logo = $taller->getLogo();
+            if ($logo) {
+                $rutaLogo = __DIR__ . '/../../uploads/logos/' . $logo;
+                if (file_exists($rutaLogo)) {
+                    unlink($rutaLogo);
+                }
+            }
+
+            // 5. Eliminar el taller
+            $em->remove($taller);
+            $em->flush();
+
+            ApiResponse::success(['message' => 'Taller eliminado correctamente']);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Seleccionar un taller para administrar (para super usuario).
+     * Guarda el taller seleccionado en la sesión.
+     * @return void
+     */
+    public function seleccionarTaller(): void
+    {
+        try {
+            // Requerir autenticación
+            AuthMiddleware::requireAuth();
+
+            $em = $GLOBALS['entityManager'];
+            $user = $this->authService->getCurrentUser();
+
+            if (!$user) {
+                ApiResponse::error('Usuario no encontrado', 404);
+                return;
+            }
+
+            // Solo "acaldeo" puede seleccionar talleres
+            if ($user->getUsuario() !== 'acaldeo') {
+                ApiResponse::error('Solo el usuario acaldeo puede seleccionar talleres', 403);
+                return;
+            }
+
+            // Decodificar entrada JSON
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Verificar si el JSON es válido
+            if (!$input || !isset($input['tallerId'])) {
+                ApiResponse::error('ID del taller es requerido', 400);
+                return;
+            }
+
+            // Verificar que el taller existe
+            $taller = $em->find(Taller::class, $input['tallerId']);
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            // Guardar el taller seleccionado en la sesión
+            $_SESSION['taller_id'] = $taller->getId();
+
+            ApiResponse::success([
+                'tallerId' => $taller->getId(),
+                'tallerNombre' => $taller->getNombre(),
+                'message' => 'Taller seleccionado correctamente'
+            ]);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Cambia la contraseña del usuario actual (solo para super usuario acaldeo).
+     * @return void
+     */
+    public function cambiarPasswordPropia(): void
+    {
+        try {
+            // Requerir autenticación
+            AuthMiddleware::requireAuth();
+
+            $em = $GLOBALS['entityManager'];
+            $user = $this->authService->getCurrentUser();
+
+            if (!$user) {
+                ApiResponse::error('Usuario no encontrado', 404);
+                return;
+            }
+
+            // Solo "acaldeo" puede cambiar su propia contraseña aquí
+            if ($user->getUsuario() !== 'acaldeo') {
+                ApiResponse::error('Solo el usuario acaldeo puede cambiar su contraseña aquí', 403);
+                return;
+            }
+
+            // Decodificar entrada JSON
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Verificar si el JSON es válido
+            if (!$input || !isset($input['password']) || empty($input['password'])) {
+                ApiResponse::error('Contraseña es requerida', 400);
+                return;
+            }
+
+            // Validar longitud mínima
+            if (strlen($input['password']) < 6) {
+                ApiResponse::error('La contraseña debe tener al menos 6 caracteres', 400);
+                return;
+            }
+
+            // Actualizar contraseña
+            $user->setPasswordHash(password_hash($input['password'], PASSWORD_DEFAULT));
+            $em->flush();
+
+            ApiResponse::success(['message' => 'Contraseña actualizada correctamente']);
+        } catch (Exception $e) {
             throw $e;
         }
     }

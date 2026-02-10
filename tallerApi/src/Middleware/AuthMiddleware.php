@@ -43,6 +43,7 @@ class AuthMiddleware
     /**
      * Requiere autenticación y verifica que el usuario autenticado tenga acceso al taller especificado.
      * Primero asegura que el usuario esté autenticado, luego verifica si el ID del taller del usuario coincide con el ID proporcionado.
+     * El usuario "acaldeo" tiene acceso a todos los talleres.
      * Si el acceso es denegado, envía una respuesta de error prohibido y termina la solicitud.
      *
      * @param int $tallerId El ID del taller para verificar acceso.
@@ -53,8 +54,14 @@ class AuthMiddleware
         // Primero, asegurar que el usuario esté autenticado
         self::requireAuth();
 
+        // Verificar si es el super usuario "acaldeo" - tiene acceso a todos los talleres
+        $currentUser = $_SESSION['usuario'] ?? '';
+        if ($currentUser === 'acaldeo') {
+            return; // Permitir acceso
+        }
+
         // Verificar si el ID del taller del usuario coincide con el ID del taller solicitado
-        if ($_SESSION['taller_id'] != $tallerId) {
+        if (($_SESSION['taller_id'] ?? null) != $tallerId) {
             // Enviar respuesta de error prohibido con estado HTTP 403
             ApiResponse::error('Acceso denegado al taller', 403);
             exit;

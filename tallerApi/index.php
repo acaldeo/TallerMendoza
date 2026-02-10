@@ -200,6 +200,37 @@ try {
         AuthMiddleware::requireAuth();
         $controller = new AdminController();
         $controller->crearTaller();
+    } elseif ($path === '/api/v1/admin/taller' && $requestMethod === 'DELETE') {
+        // Requiere autenticación
+        // Eliminar el taller del usuario actual con todos sus datos
+        AuthMiddleware::requireAuth();
+        $controller = new AdminController();
+        $controller->eliminarTaller();
+    } elseif (preg_match('#^/api/v1/admin/talleres/(\d+)$#', $path, $matches)) {
+        $tallerId = (int)$matches[1];
+        if ($requestMethod === 'DELETE') {
+            // Requiere autenticación
+            // Eliminar taller por ID (solo para super usuario acaldeo)
+            AuthMiddleware::requireAuth();
+            $controller = new AdminController();
+            $controller->eliminarTallerPorId($tallerId);
+        }
+    } elseif ($path === '/api/v1/admin/talleres/seleccionar' && $requestMethod === 'POST') {
+        // Requiere autenticación
+        // Seleccionar un taller para administrar (para super usuario)
+        AuthMiddleware::requireAuth();
+        $controller = new AdminController();
+        $controller->seleccionarTaller();
+    } elseif ($path === '/api/v1/admin/password' && $requestMethod === 'PUT') {
+        // Requiere autenticación
+        // Cambiar contraseña del usuario actual (solo para acaldeo)
+        AuthMiddleware::requireAuth();
+        $controller = new AdminController();
+        $controller->cambiarPasswordPropia();
+    } elseif ($path === '/api/v1/talleres' && $requestMethod === 'GET') {
+        // Listar todos los talleres disponibles (público)
+        $controller = new TallerController();
+        $controller->listarTalleres();
     } else {
         // Endpoint no encontrado
         // Si ninguna ruta coincide, devolver error 404

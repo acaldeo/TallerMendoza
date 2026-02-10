@@ -9,6 +9,10 @@ createApp({
         const turnos = ref([]);
         // Reactive state for list of usuarios (users)
         const usuarios = ref([]);
+        // Reactive state for list of talleres
+        const talleres = ref([]);
+        // Reactive state for loading talleres
+        const loadingTalleres = ref(false);
         // Reactive state for email configuration
         const emailConfig = reactive({
             smtpHost: 'smtp.hostinger.com',
@@ -34,6 +38,8 @@ createApp({
         const error = ref(null);
         // Reactive state for email-specific error messages
         const errorEmail = ref('');
+        // Reactive state for taller-specific error messages
+        const errorTaller = ref('');
         // Reactive state for active tab in UI
         const activeTab = ref('turnos');
         // Reactive state to show/hide user creation form
@@ -42,6 +48,8 @@ createApp({
         const showPasswordForm = ref(false);
         // Reactive state to show/hide email configuration form
         const showEmailForm = ref(false);
+        // Reactive state to show/hide taller creation form
+        const showTallerForm = ref(false);
         // Reactive state for selected user in password form
         const selectedUser = ref(null);
         // Reactive state for turnos filters
@@ -62,6 +70,12 @@ createApp({
         // Reactive form data for updating password
         const passwordForm = reactive({
             password: ''
+        });
+
+        // Reactive form data for creating new taller
+        const tallerForm = reactive({
+            nombre: '',
+            capacidad: 3
         });
 
         // Instance of API service for backend communication
@@ -86,8 +100,15 @@ createApp({
                 loginForm.usuario = '';
                 loginForm.password = '';
 
-                // Load turnos after successful login
-                await cargarTurnos();
+                // Check if user has a taller assigned
+                if (userData.tallerId) {
+                    // Load turnos after successful login
+                    await cargarTurnos();
+                } else if (userData.rol === 'super') {
+                    // Super user without taller - load talleres for selection
+                    await cargarTalleres();
+                }
+                // If no tallerId, show "Sin Taller Asignado" screen
             } catch (err) {
                 // Set error message on failure
                 error.value = err.message;
@@ -325,17 +346,83 @@ createApp({
             showPasswordForm.value = true;
         };
 
+        // === TALLER MANAGEMENT ===
+
+        // Function to load talleres from API
+        const cargarTalleres = async () => {
+            try {
+                loadingTalleres.value = true;
+                const data = await api.listarTalleres();
+                talleres.value = data;
+            } catch (err) {
+                error.value = err.message;
+            } finally {
+                loadingTalleres.value = false;
+            }
+        };
+
+        // Function to select a taller to administer (for super user)
+        const seleccionarTaller = async (tallerId) => {
+            try {
+                loading.value = true;
+                error.value = null;
+
+                const data = await api.seleccionarTaller(tallerId);
+
+                // Update user's taller
+                user.value.tallerId = data.tallerId;
+                user.value.tallerNombre = data.tallerNombre;
+
+                showSuccess('Taller seleccionado correctamente');
+
+                // Load turnos for the selected taller
+                await cargarTurnos();
+            } catch (err) {
+                error.value = err.message;
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        // Function to create a new taller
+        const crearTaller = async () => {
+            try {
+                loading.value = true;
+                errorTaller.value = null;
+
+                await api.crearTaller(tallerForm);
+
+                // Clear form and hide it
+                tallerForm.nombre = '';
+                tallerForm.capacidad = 3;
+                showTallerForm.value = false;
+
+                // Reload talleres to reflect changes
+                await cargarTalleres();
+
+                showSuccess('Taller creado correctamente');
+            } catch (err) {
+                errorTaller.value = err.message;
+            } finally {
+                loading.value = false;
+            }
+        };
+
         // Function to close all forms and reset state
         const cerrarFormularios = () => {
             // Hide forms and reset related state
             showUserForm.value = false;
             showPasswordForm.value = false;
             showEmailForm.value = false;
+            showTallerForm.value = false;
             selectedUser.value = null;
             Object.keys(userForm).forEach(key => userForm[key] = '');
             passwordForm.password = '';
+            tallerForm.nombre = '';
+            tallerForm.capacidad = 3;
             error.value = null;
             errorEmail.value = null;
+            errorTaller.value = null;
         };
 
         // Function to apply filters to turnos
@@ -497,33 +584,41 @@ createApp({
             user,
             turnos,
             usuarios,
+            talleres,
             emailConfig,
             loading,
             loadingEmail,
             error,
             errorEmail,
+            errorTaller,
             activeTab,
             showUserForm,
             showPasswordForm,
             showEmailForm,
+            showTallerForm,
             selectedUser,
             loginForm,
             userForm,
             passwordForm,
+            tallerForm,
             filtroPatente,
             tallerLogo,
             logoUrl,
+            loadingTalleres,
             loadingLogo,
             errorLogo,
             isLoggedIn,
             login,
             logout,
             cargarTurnos,
+            cargarTalleres,
+            seleccionarTaller,
             cargarUsuarios,
             cargarConfiguracionEmail,
             cargarLogo,
             finalizarTurno,
             crearUsuario,
+            crearTaller,
             actualizarPassword,
             eliminarUsuario,
             abrirFormPassword,

@@ -51,7 +51,10 @@ class AuthService
 
         // Set session variables for authenticated user
         $_SESSION['user_id'] = $user->getId();
-        $_SESSION['taller_id'] = $user->getTaller()->getId();
+        $_SESSION['usuario'] = $user->getUsuario();
+        // Guardar taller_id solo si el usuario tiene un taller asignado
+        $taller = $user->getTaller();
+        $_SESSION['taller_id'] = $taller ? $taller->getId() : null;
 
         return $user;
     }

@@ -39,11 +39,11 @@ class Usuario
 
     /**
      * El taller asociado con este usuario.
-     * Relación muchos-a-uno con la entidad Taller, no puede ser nula.
+     * Relación muchos-a-uno con la entidad Taller, puede ser nula para super usuarios.
      */
     #[ORM\ManyToOne(targetEntity: Taller::class, inversedBy: 'usuarios')]
-    #[ORM\JoinColumn(nullable: false)]
-    private Taller $taller;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Taller $taller = null;
 
     /**
      * El nombre de usuario para autenticación.
@@ -60,6 +60,14 @@ class Usuario
     private string $passwordHash;
 
     /**
+     * El rol del usuario en el sistema.
+     * Valores posibles: 'empleado', 'admin', 'super'.
+     * Los super usuarios pueden crear/eliminar talleres sin tener uno asignado.
+     */
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'empleado'])]
+    private string $rol = 'empleado';
+
+    /**
      * Obtiene el identificador único del usuario.
      *
      * @return int El ID del usuario.
@@ -72,9 +80,9 @@ class Usuario
     /**
      * Obtiene el taller asociado con este usuario.
      *
-     * @return Taller La entidad Taller.
+     * @return Taller|null El taller asociado o null si no tiene.
      */
-    public function getTaller(): Taller
+    public function getTaller(): ?Taller
     {
         return $this->taller;
     }
@@ -82,10 +90,10 @@ class Usuario
     /**
      * Establece el taller para este usuario.
      *
-     * @param Taller $taller La entidad Taller.
+     * @param Taller|null $taller La entidad Taller o null.
      * @return self Retorna la instancia para encadenamiento de métodos.
      */
-    public function setTaller(Taller $taller): self
+    public function setTaller(?Taller $taller): self
     {
         $this->taller = $taller;
         return $this;
@@ -132,6 +140,28 @@ class Usuario
     public function setPasswordHash(string $passwordHash): self
     {
         $this->passwordHash = $passwordHash;
+        return $this;
+    }
+
+    /**
+     * Obtiene el rol del usuario.
+     *
+     * @return string El rol del usuario ('empleado', 'admin', 'super').
+     */
+    public function getRol(): string
+    {
+        return $this->rol;
+    }
+
+    /**
+     * Establece el rol del usuario.
+     *
+     * @param string $rol El nuevo rol ('empleado', 'admin', 'super').
+     * @return self Retorna la instancia para encadenamiento de métodos.
+     */
+    public function setRol(string $rol): self
+    {
+        $this->rol = $rol;
         return $this;
     }
 

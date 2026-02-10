@@ -45,6 +45,11 @@ class ApiService {
         return this.request(`/api/v1/taller/${tallerId}/estado`);
     }
 
+    // List all available talleres
+    async listarTalleres() {
+        return this.request('/api/v1/talleres');
+    }
+
     // Create a new turno for a taller
     async crearTurno(tallerId, turnoData) {
         return this.request(`/api/v1/taller/${tallerId}/turnos`, {
@@ -143,6 +148,36 @@ class ApiService {
         return this.request('/api/v1/admin/talleres', {
             method: 'POST',
             body: JSON.stringify(tallerData)
+        });
+    }
+
+    // Delete taller with all related data
+    async eliminarTaller() {
+        return this.request('/api/v1/admin/taller', {
+            method: 'DELETE'
+        });
+    }
+
+    // Delete taller by ID (for super user)
+    async eliminarTallerPorId(tallerId) {
+        return this.request('/api/v1/admin/talleres/' + tallerId, {
+            method: 'DELETE'
+        });
+    }
+
+    // Select a workshop to administer (for super user)
+    async seleccionarTaller(tallerId) {
+        return this.request('/api/v1/admin/talleres/seleccionar', {
+            method: 'POST',
+            body: JSON.stringify({ tallerId: tallerId })
+        });
+    }
+
+    // Change password for the current user (for super user acaldeo)
+    async cambiarPasswordPropia(passwordData) {
+        return this.request('/api/v1/admin/password', {
+            method: 'PUT',
+            body: JSON.stringify(passwordData)
         });
     }
 

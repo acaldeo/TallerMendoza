@@ -11,6 +11,10 @@ createApp({
         const error = ref(null);
         // Reactive state for taller ID (default 1)
         const tallerId = ref(1);
+        // Reactive state for talleres list
+        const talleres = ref([]);
+        // Reactive state for selected taller
+        const tallerSeleccionado = ref(null);
         // Reactive state for auto-refresh interval ID
         const autoRefreshInterval = ref(null);
         // Reactive state for last update timestamp
@@ -66,6 +70,30 @@ createApp({
                     refreshing.value = false;
                 }
             }
+        };
+
+        // Function to load talleres list from API
+        const cargarTalleres = async () => {
+            try {
+                const data = await api.listarTalleres();
+                talleres.value = data;
+                // Auto-select first taller if none selected
+                if (data.length > 0 && !tallerSeleccionado.value) {
+                    tallerSeleccionado.value = data[0];
+                    tallerId.value = data[0].id;
+                    cargarEstado();
+                }
+            } catch (err) {
+                console.error('Error cargando talleres:', err);
+            }
+        };
+
+        // Function to select a taller
+        const seleccionarTaller = (taller) => {
+            tallerSeleccionado.value = taller;
+            tallerId.value = taller.id;
+            showForm.value = false;
+            cargarEstado();
         };
 
         // Function to start auto-refresh of taller estado every 8 seconds
@@ -156,7 +184,7 @@ createApp({
 
         // Lifecycle hook to run on component mount
         onMounted(() => {
-            cargarEstado();
+            cargarTalleres();
             iniciarAutoRefresh();
         });
 
@@ -171,6 +199,8 @@ createApp({
             loading,
             error,
             tallerId,
+            talleres,
+            tallerSeleccionado,
             lastUpdate,
             showForm,
             creatingTurno,
@@ -180,6 +210,8 @@ createApp({
             refreshing,
             turnoForm,
             cargarEstado,
+            cargarTalleres,
+            seleccionarTaller,
             crearTurno,
             cerrarModalExito,
             toggleForm,

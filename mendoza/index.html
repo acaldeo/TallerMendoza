@@ -21,7 +21,7 @@
             <div class="container">
                 <span class="navbar-brand mb-0 h1">
                     <i class="bi bi-wrench"></i>
-                    Estado del Taller
+                    {{ tallerSeleccionado ? tallerSeleccionado.nombre : 'Estado del Taller' }}
                 </span>
                 <div class="auto-refresh-indicator">
                     <small class="text-white-50">
@@ -38,6 +38,38 @@
         </nav>
 
         <div class="container">
+            <!-- Selector de talleres -->
+            <div v-if="talleres.length > 1" class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-building"></i>
+                                Seleccionar Taller:
+                            </label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button
+                                    v-for="taller in talleres"
+                                    :key="taller.id"
+                                    @click="seleccionarTaller(taller)"
+                                    class="btn"
+                                    :class="tallerSeleccionado?.id === taller.id ? 'btn-primary' : 'btn-outline-primary'"
+                                >
+                                    <span v-if="taller.logo" class="me-2">
+                                        <img
+                                            :src="'/taller/tallerApi/uploads/logos/' + taller.logo"
+                                            :alt="taller.nombre"
+                                            style="height: 20px; object-fit: contain;"
+                                        >
+                                    </span>
+                                    {{ taller.nombre }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Loading -->
             <div v-if="loading && !estado" class="text-center py-5">
                 <div class="loading-spinner"></div>
@@ -61,15 +93,15 @@
                             <div class="card-body text-center">
                                 <!-- Logo del taller -->
                                 <img 
-                                    v-if="estado.logo" 
-                                    :src="'/taller/tallerApi/uploads/logos/' + estado.logo" 
+                                    v-if="tallerSeleccionado?.logoUrl" 
+                                    :src="tallerSeleccionado.logoUrl" 
                                     alt="Logo" 
                                     class="mb-3"
                                     style="height: 80px; object-fit: contain;"
                                 >
-                                <h2 class="card-title">{{ estado.taller }}</h2>
+                                <h2 class="card-title">{{ tallerSeleccionado?.nombre }}</h2>
                                 <p class="card-text text-muted">
-                                    Capacidad: {{ estado.capacidad }} turnos simultáneos
+                                    Capacidad: {{ tallerSeleccionado?.capacidad }} turnos simultáneos
                                 </p>
                                 <button 
                                     @click="toggleForm" 

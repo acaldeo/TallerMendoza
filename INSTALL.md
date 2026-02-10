@@ -254,14 +254,35 @@ CREATE TABLE turnos (
 -- Tabla de usuarios administradores
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    taller_id INT,
+    taller_id INT NULL,  -- Nullable para super usuarios
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    rol ENUM('admin', 'empleado') DEFAULT 'empleado',
+    rol ENUM('admin', 'empleado', 'super') DEFAULT 'empleado',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (taller_id) REFERENCES talleres(id)
 );
+
+-- Crear super usuario (puede crear/eliminar talleres, no necesita taller propio)
+-- Password: acaldeo123 (hash bcrypt)
+INSERT INTO usuarios (usuario, passwordHash, rol, taller_id) 
+VALUES ('acaldeo', '$2y$12$sEIElcs./BtfYvZHVjOvcuh/ZcsdeHoJkgUJLlOs1mqHBUARlVkaO', 'super', NULL);
+```
+
+### Actualizar Base de Datos Existente
+
+Si ya tienes una base de datos y necesitas agregar la columna `rol` y permitir `taller_id` NULL:
+
+```sql
+-- Agregar columna rol si no existe
+ALTER TABLE usuarios ADD COLUMN rol VARCHAR(20) DEFAULT 'empleado';
+
+-- Modificar taller_id para permitir NULL (super usuarios no necesitan taller)
+ALTER TABLE usuarios MODIFY taller_id INT NULL;
+
+-- Crear super usuario (password: acaldeo123)
+INSERT INTO usuarios (usuario, passwordHash, rol, taller_id) 
+VALUES ('acaldeo', '$2y$12$sEIElcs./BtfYvZHVjOvcuh/ZcsdeHoJkgUJLlOs1mqHBUARlVkaO', 'super', NULL);
 ```
 
 ---
@@ -657,14 +678,33 @@ CREATE TABLE turnos (
 -- Admin users table
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    taller_id INT,
+    taller_id INT NULL,  -- Nullable for super users
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    rol ENUM('admin', 'empleado') DEFAULT 'empleado',
+    rol ENUM('admin', 'empleado', 'super') DEFAULT 'empleado',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (taller_id) REFERENCES talleres(id)
 );
+
+-- Create super user (can create/delete workshops, doesn't need own workshop)
+-- Password: acaldeo123 (bcrypt hash)
+INSERT INTO usuarios (username, password, rol, taller_id) 
+VALUES ('acaldeo', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super', NULL);
+```
+
+### Update Existing Database
+
+If you already have a database and need to add the 'super' role and allow `taller_id` NULL:
+
+```sql
+ALTER TABLE usuarios MODIFY taller_id INT NULL;
+
+ALTER TABLE usuarios MODIFY rol ENUM('admin', 'empleado', 'super') DEFAULT 'empleado';
+
+-- Create super user (password: acaldeo123)
+INSERT INTO usuarios (username, password, rol, taller_id) 
+VALUES ('acaldeo', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super', NULL);
 ```
 
 ---

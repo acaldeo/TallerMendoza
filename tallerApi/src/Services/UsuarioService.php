@@ -50,11 +50,12 @@ class UsuarioService
 
         // Format user data for response
         return array_map(function(Usuario $usuario) {
+            $taller = $usuario->getTaller();
             return [
                 'id' => $usuario->getId(),
                 'usuario' => $usuario->getUsuario(),
-                'tallerId' => $usuario->getTaller()->getId(),
-                'tallerNombre' => $usuario->getTaller()->getNombre()
+                'tallerId' => $taller ? $taller->getId() : null,
+                'tallerNombre' => $taller ? $taller->getNombre() : null
             ];
         }, $usuarios);
     }
