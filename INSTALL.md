@@ -255,9 +255,9 @@ CREATE TABLE turnos (
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     taller_id INT NULL,  -- Nullable para super usuarios
-    username VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    rol ENUM('admin', 'empleado', 'super') DEFAULT 'empleado',
+    usuario VARCHAR(100) NOT NULL UNIQUE,
+    passwordHash VARCHAR(255) NOT NULL,
+    rol VARCHAR(20) DEFAULT 'empleado',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (taller_id) REFERENCES talleres(id)
@@ -689,22 +689,24 @@ CREATE TABLE usuarios (
 
 -- Create super user (can create/delete workshops, doesn't need own workshop)
 -- Password: acaldeo123 (bcrypt hash)
-INSERT INTO usuarios (username, password, rol, taller_id) 
-VALUES ('acaldeo', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super', NULL);
+INSERT INTO usuarios (usuario, passwordHash, rol, taller_id) 
+VALUES ('acaldeo', '$2y$12$sEIElcs./BtfYvZHVjOvcuh/ZcsdeHoJkgUJLlOs1mqHBUARlVkaO', 'super', NULL);
 ```
 
 ### Update Existing Database
 
-If you already have a database and need to add the 'super' role and allow `taller_id` NULL:
+If you already have a database and need to add the `rol` column and allow `taller_id` NULL:
 
 ```sql
+-- Add rol column if it doesn't exist
+ALTER TABLE usuarios ADD COLUMN rol VARCHAR(20) DEFAULT 'empleado';
+
+-- Modify taller_id to allow NULL (super users don't need a workshop)
 ALTER TABLE usuarios MODIFY taller_id INT NULL;
 
-ALTER TABLE usuarios MODIFY rol ENUM('admin', 'empleado', 'super') DEFAULT 'empleado';
-
 -- Create super user (password: acaldeo123)
-INSERT INTO usuarios (username, password, rol, taller_id) 
-VALUES ('acaldeo', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super', NULL);
+INSERT INTO usuarios (usuario, passwordHash, rol, taller_id) 
+VALUES ('acaldeo', '$2y$12$sEIElcs./BtfYvZHVjOvcuh/ZcsdeHoJkgUJLlOs1mqHBUARlVkaO', 'super', NULL);
 ```
 
 ---

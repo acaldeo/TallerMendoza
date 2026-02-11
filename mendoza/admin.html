@@ -252,14 +252,12 @@
                                         <td>{{ turno.modeloVehiculo }}</td>
                                         <td>{{ turno.patente }}</td>
                                         <td>
-                                            <span 
-                                                :title="turno.descripcionProblema"
-                                                class="d-inline-block text-truncate"
-                                                style="max-width: 200px;"
-                                            >
+                                            <span :title="turno.descripcionProblema">
                                                 {{ turno.descripcionProblema }}
                                             </span>
                                         </td>
+
+
                                         <td>
                                             <span 
                                                 class="badge"
