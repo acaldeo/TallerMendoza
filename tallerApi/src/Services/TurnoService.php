@@ -75,17 +75,19 @@ class TurnoService
                 throw new Exception('Taller no encontrado');
             }
 
-            // Verificar si hay un turno activo para esta patente
+            // Verificar si hay un turno activo para esta patente en CUALQUIER taller
             $existingTurno = $this->em->createQuery(
-                'SELECT t FROM App\Entities\Turno t WHERE t.taller = :taller AND t.patente = :patente AND t.estado != :finalizado'
+                'SELECT t FROM App\Entities\Turno t WHERE t.patente = :patente AND t.estado != :finalizado'
             )->setParameters([
-                'taller' => $taller,
                 'patente' => $datos['patente'],
                 'finalizado' => Turno::ESTADO_FINALIZADO
             ])->getOneOrNullResult();
 
             if ($existingTurno) {
-                throw new Exception('Ya tienes un turno asignado. Tu número de turno es ' . $existingTurno->getNumeroTurno());
+                // Buscar el nombre del taller del turno existente
+                $tallerExistente = $existingTurno->getTaller();
+                $nombreTaller = $tallerExistente ? $tallerExistente->getNombre() : 'desconocido';
+                throw new Exception('Este vehículo ya tiene un turno activo (#' . $existingTurno->getNumeroTurno() . ') en otro taller (' . $nombreTaller . '). Solo puedes tener un turno activo en todo el sistema.');
             }
 
             // Calcular el siguiente número de turno para este taller
