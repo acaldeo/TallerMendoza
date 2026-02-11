@@ -38,6 +38,7 @@ class Turno
     public const ESTADO_EN_TALLER = 'EN_TALLER';
     public const ESTADO_EN_ESPERA = 'EN_ESPERA';
     public const ESTADO_FINALIZADO = 'FINALIZADO';
+    public const ESTADO_CANCELADO = 'CANCELADO';
 
     /**
      * El identificador único del turno.
@@ -313,7 +314,7 @@ class Turno
     /**
      * Establece el estado del turno.
      * Actualiza automáticamente fechaInicio al transitar a EN_TALLER,
-     * y fechaFinalizacion al transitar a FINALIZADO.
+     * y fechaFinalizacion al transitar a FINALIZADO o CANCELADO.
      *
      * @param string $estado El nuevo estado.
      * @return self Retorna la instancia para encadenamiento de métodos.
@@ -323,7 +324,7 @@ class Turno
         $this->estado = $estado;
         if ($estado === self::ESTADO_EN_TALLER && !$this->fechaInicio) {
             $this->fechaInicio = new DateTime();
-        } elseif ($estado === self::ESTADO_FINALIZADO && !$this->fechaFinalizacion) {
+        } elseif (($estado === self::ESTADO_FINALIZADO || $estado === self::ESTADO_CANCELADO) && !$this->fechaFinalizacion) {
             $this->fechaFinalizacion = new DateTime();
         }
         return $this;

@@ -210,14 +210,15 @@ class TurnoService
             throw new Exception('Taller no encontrado');
         }
 
-        // Consultar citas activas (no finalizadas) para este taller
+        // Consultar citas activas (no finalizadas ni canceladas) para este taller
         $turnos = $this->em->createQuery(
             'SELECT t FROM App\Entities\Turno t
-             WHERE t.taller = :taller AND t.estado != :finalizado
+             WHERE t.taller = :taller AND t.estado NOT IN (:finalizado, :cancelado)
              ORDER BY t.numeroTurno ASC'
         )->setParameters([
             'taller' => $taller,
-            'finalizado' => Turno::ESTADO_FINALIZADO
+            'finalizado' => Turno::ESTADO_FINALIZADO,
+            'cancelado' => Turno::ESTADO_CANCELADO
         ])->getResult();
 
         $enTaller = [];
@@ -227,7 +228,8 @@ class TurnoService
         foreach ($turnos as $turno) {
             $data = [
                 'numeroTurno' => $turno->getNumeroTurno(),
-                'estado' => $turno->getEstado()
+                'estado' => $turno->getEstado(),
+                'patente' => $turno->getPatente()
             ];
 
             if ($turno->getEstado() === Turno::ESTADO_EN_TALLER) {
@@ -302,5 +304,44 @@ class TurnoService
                 'fechaFinalizacion' => $turno->getFechaFinalizacion()?->format('Y-m-d H:i:s')
             ];
         }, $turnos);
+    }
+
+    /**
+     * Cancela un turno verificando que coincida la patente.
+     *
+     * @param int $turnoId El ID del turno a cancelar
+     * @param string $patente La patente para verificar propiedad
+     * @return void
+     * @throws Exception Si el turno no existe, patente no coincide o ya está finalizado
+     */
+    public function cancelarTurno(int $turnoId, string $patente): void
+    {
+        $this->em->beginTransaction();
+
+        try {
+            $turno = $this->em->find(Turno::class, $turnoId, LockMode::PESSIMISTIC_WRITE);
+            if (!$turno) {
+                throw new Exception('Turno no encontrado');
+            }
+
+            // Verificar que la patente coincida
+            if ($turno->getPatente() !== $patente) {
+                throw new Exception('La patente no coincide con la registrada en el turno');
+            }
+
+            // Verificar que no esté ya finalizado o cancelado
+            if ($turno->getEstado() === Turno::ESTADO_FINALIZADO) {
+                throw new Exception('No se puede cancelar un turno ya finalizado');
+            }
+
+            // Cambiar estado a cancelado
+            $turno->setEstado(Turno::ESTADO_CANCELADO);
+
+            $this->em->flush();
+            $this->em->commit();
+        } catch (Exception $e) {
+            $this->em->rollback();
+            throw $e;
+        }
     }
 }

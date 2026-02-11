@@ -29,6 +29,12 @@ createApp({
         const turnoCreado = ref(null);
         // Reactive state for silent refresh indicator
         const refreshing = ref(false);
+        // Reactive state for cancel turno modal
+        const showCancelModal = ref(false);
+        const cancelandoTurno = ref(false);
+        const cancelError = ref('');
+        const cancelSuccess = ref(false);
+        const cancelSuccessMessage = ref('');
 
         // Reactive form data for creating a new turno
         const turnoForm = reactive({
@@ -37,6 +43,12 @@ createApp({
             modeloVehiculo: '',
             patente: '',
             descripcionProblema: ''
+        });
+
+        // Reactive form data for cancelling a turno
+        const cancelForm = reactive({
+            turnoId: '',
+            patente: ''
         });
 
         // Instance of API service for backend communication
@@ -170,6 +182,52 @@ createApp({
             turnoCreado.value = null;
         };
 
+        // Function to open cancel turno modal
+        const openCancelModal = (turnoId) => {
+            cancelForm.turnoId = turnoId;
+            cancelForm.telefono = '';
+            cancelError.value = '';
+            cancelSuccess.value = false;
+            showCancelModal.value = true;
+        };
+
+        // Function to close cancel turno modal
+        const closeCancelModal = () => {
+            showCancelModal.value = false;
+            cancelForm.turnoId = '';
+            cancelForm.patente = '';
+        };
+
+        // Function to cancel a turno by patente
+        const cancelarTurnoPorPatente = async () => {
+            try {
+                cancelandoTurno.value = true;
+                cancelError.value = '';
+                cancelSuccess.value = false;
+
+                const result = await api.cancelarTurnoPorPatente(tallerId.value, cancelForm.patente);
+                cancelSuccess.value = true;
+                cancelSuccessMessage.value = result.message || 'Turno cancelado correctamente';
+
+                // Clear form
+                cancelForm.patente = '';
+
+                // Reload estado after cancellation
+                await cargarEstado();
+
+                // Clear success message after delay
+                setTimeout(() => {
+                    cancelSuccess.value = false;
+                    cancelSuccessMessage.value = '';
+                }, 5000);
+
+            } catch (err) {
+                cancelError.value = err.message;
+            } finally {
+                cancelandoTurno.value = false;
+            }
+        };
+
         // Function to toggle the turno creation form visibility
         const toggleForm = () => {
             showForm.value = !showForm.value;
@@ -209,12 +267,21 @@ createApp({
             turnoCreado,
             refreshing,
             turnoForm,
+            cancelForm,
+            showCancelModal,
+            cancelandoTurno,
+            cancelError,
+            cancelSuccess,
+            cancelSuccessMessage,
             cargarEstado,
             cargarTalleres,
             seleccionarTaller,
             crearTurno,
             cerrarModalExito,
             toggleForm,
+            openCancelModal,
+            closeCancelModal,
+            cancelarTurnoPorPatente,
             getEstadoClass,
             getEstadoBadgeClass,
             formatTime

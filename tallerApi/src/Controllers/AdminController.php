@@ -167,6 +167,90 @@ class AdminController
         }
     }
 
+    /**
+     * Cancela un turno verificando la patente del vehículo.
+     * Endpoint público (sin autenticación) para que los clientes puedan cancelar sus turnos.
+     * @return void
+     */
+    public function cancelarTurno(): void
+    {
+        try {
+            // Decodificar entrada JSON
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!$input || !isset($input['turnoId']) || !isset($input['patente'])) {
+                ApiResponse::error('Turno ID y patente son requeridos', 400);
+                return;
+            }
+
+            $turnoId = (int)$input['turnoId'];
+            $patente = trim(strtoupper($input['patente']));
+
+            $this->turnoService->cancelarTurno($turnoId, $patente);
+
+            ApiResponse::success(['message' => 'Turno cancelado correctamente']);
+        } catch (Exception $e) {
+            ApiResponse::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * Cancela un turno por patente para un taller específico.
+     * Busca el turno activo por patente y lo cancela.
+     * @param int $tallerId El ID del taller
+     * @return void
+     */
+    public function cancelarTurnoPorPatente(int $tallerId): void
+    {
+        try {
+            // Decodificar entrada JSON
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!$input || !isset($input['patente'])) {
+                ApiResponse::error('Patente es requerida', 400);
+                return;
+            }
+
+            $patente = trim(strtoupper($input['patente']));
+
+            // Buscar el turno activo por patente
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+            
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            // Buscar turno activo con esa patente
+            $turno = $em->createQuery(
+                'SELECT t FROM App\Entities\Turno t
+                 WHERE t.taller = :taller AND t.patente = :patente
+                 AND t.estado != :finalizado AND t.estado != :cancelado'
+            )->setParameters([
+                'taller' => $taller,
+                'patente' => $patente,
+                'finalizado' => Turno::ESTADO_FINALIZADO,
+                'cancelado' => Turno::ESTADO_CANCELADO
+            ])->getOneOrNullResult();
+
+            if (!$turno) {
+                ApiResponse::error('No se encontró un turno activo con esa patente en este taller', 404);
+                return;
+            }
+
+            // Cancelar el turno
+            $this->turnoService->cancelarTurno($turno->getId(), $patente);
+
+            ApiResponse::success([
+                'message' => 'Turno #' . $turno->getNumeroTurno() . ' cancelado correctamente',
+                'numeroTurno' => $turno->getNumeroTurno()
+            ]);
+        } catch (Exception $e) {
+            ApiResponse::error($e->getMessage(), 400);
+        }
+    }
+
     // === GESTIÓN DE USUARIOS ===
 
     /**

@@ -91,7 +91,6 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body text-center">
-                                <!-- Logo del taller -->
                                 <img 
                                     v-if="tallerSeleccionado?.logoUrl" 
                                     :src="tallerSeleccionado.logoUrl" 
@@ -103,14 +102,49 @@
                                 <p class="card-text text-muted">
                                     Capacidad: {{ tallerSeleccionado?.capacidad }} turnos simultáneos
                                 </p>
-                                <button 
-                                    @click="toggleForm" 
-                                    class="btn btn-primary btn-lg"
-                                    :disabled="loading || creatingTurno"
-                                >
-                                    <i class="bi bi-plus-circle"></i>
-                                    {{ showForm ? 'Cancelar' : 'Pedir Turno' }}
-                                </button>
+                                <div class="d-flex justify-content-center gap-2 mb-3">
+                                    <button 
+                                        @click="toggleForm" 
+                                        class="btn btn-primary btn-lg"
+                                        :disabled="loading || creatingTurno"
+                                    >
+                                        <i class="bi bi-plus-circle"></i>
+                                        {{ showForm ? 'Cancelar' : 'Pedir Turno' }}
+                                    </button>
+                                </div>
+                                <!-- Sección para cancelar turno por patente -->
+                                <div class="cancelar-turno-section mt-3">
+                                    <hr>
+                                    <h6 class="mb-3">Cancelar un Turno</h6>
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <input
+                                            type="text"
+                                            class="form-control form-control-sm"
+                                            style="max-width: 150px;"
+                                            v-model="cancelForm.patente"
+                                            @input="cancelForm.patente = $event.target.value.toUpperCase()"
+                                            placeholder="Ingresa patente"
+                                            maxlength="10"
+                                        >
+                                        <button
+                                            class="btn btn-outline-danger btn-sm"
+                                            @click="cancelarTurnoPorPatente"
+                                            :disabled="!cancelForm.patente || cancelandoTurno"
+                                        >
+                                            <i class="bi bi-x-circle"></i>
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        Ingresa la patente del vehículo para cancelar su turno
+                                    </small>
+                                    <div v-if="cancelError" class="alert alert-danger py-2 mt-2 mb-0">
+                                        {{ cancelError }}
+                                    </div>
+                                    <div v-if="cancelSuccess" class="alert alert-success py-2 mt-2 mb-0">
+                                        {{ cancelSuccessMessage }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -171,17 +205,17 @@
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="patente" class="form-label">Patente del Vehículo *</label>
-                                       <input
-                                            type="text"
-                                            class="form-control"
-                                            id="patente"
-                                            v-model="turnoForm.patente"
-                                            @input="turnoForm.patente = $event.target.value.toUpperCase()"
-                                            required
-                                            maxlength="10"
-                                            :disabled="creatingTurno"
-                                            placeholder="Ej: ABC123"
-                                        >
+                                        <input
+                                             type="text"
+                                             class="form-control"
+                                             id="patente"
+                                             v-model="turnoForm.patente"
+                                             @input="turnoForm.patente = $event.target.value.toUpperCase()"
+                                             required
+                                             maxlength="10"
+                                             :disabled="creatingTurno"
+                                             placeholder="Ej: ABC123"
+                                         >
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="descripcionProblema" class="form-label">Descripción del Problema</label>

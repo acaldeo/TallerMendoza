@@ -58,6 +58,14 @@ class ApiService {
         });
     }
 
+    // Cancel a turno by patente (public endpoint for clients)
+    async cancelarTurnoPorPatente(tallerId, patente) {
+        return this.request(`/api/v1/taller/${tallerId}/cancelar-turno`, {
+            method: 'POST',
+            body: JSON.stringify({ patente })
+        });
+    }
+
     // Admin endpoints requiring authentication
     // Login with credentials
     async login(credentials) {

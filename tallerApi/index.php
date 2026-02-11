@@ -103,6 +103,13 @@ try {
             $controller = new TallerController();
             $controller->obtenerEstado($tallerId);
         }
+    } elseif (preg_match('#^/api/v1/taller/(\d+)/cancelar-turno$#', $path, $matches)) {
+        $tallerId = (int)$matches[1];
+        if ($requestMethod === 'POST') {
+            // Cancelar turno por patente (público)
+            $controller = new AdminController();
+            $controller->cancelarTurnoPorPatente($tallerId);
+        }
     } elseif ($path === '/api/v1/admin/login' && $requestMethod === 'POST') {
         // Endpoint de login para administradores
         // Autentica al usuario y establece la sesión
@@ -126,6 +133,10 @@ try {
             $controller = new AdminController();
             $controller->finalizarTurno($turnoId);
         }
+    } elseif ($path === '/api/v1/admin/turno/cancelar' && $requestMethod === 'POST') {
+        // Endpoint público para cancelar turnos (clientes)
+        $controller = new AdminController();
+        $controller->cancelarTurno();
     } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/usuarios$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'GET') {
