@@ -1,0 +1,32 @@
+# Variables de entorno
+.env
+
+# Vendor
+vendor/
+
+# Logs
+*.log
+
+# Archivos de sesión
+sessions/
+
+# Archivos temporales
+*.tmp
+*.cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Cookies
+cookies.txt

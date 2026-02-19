@@ -29,16 +29,25 @@ use App\Controllers\AdminController;
 use App\Middleware\AuthMiddleware;
 use App\Utils\ApiResponse;
 use App\Utils\ErrorHandler;
+use App\Utils\Env;
 
-// Configurar encabezados CORS para permitir solicitudes de origen cruzado
-// Whitelist de orígenes permitidos para seguridad
-$allowedOrigins = ['https://tallermendoza.com', 'http://localhost', 'http://127.0.0.1'];
+// Cargar variables de entorno
+Env::load(__DIR__);
+
+// HTTPS Enforcement (solo en producción)
+if (Env::get('APP_ENV') === 'production' && !isset($_SERVER['HTTPS'])) {
+    header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+    exit;
+}
+
+// Configurar encabezados CORS con whitelist
+$allowedOrigins = explode(',', Env::get('ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1'));
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Origin: ' . $origin);
 }
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
 header('Access-Control-Allow-Credentials: true');
 
 // Manejar solicitud OPTIONS (preflight) para CORS
@@ -49,11 +58,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Registrar el manejador de errores global
-// Esto asegura que todas las excepciones sean manejadas de manera consistente
 ErrorHandler::register();
 
-// Iniciar sesión para manejar la autenticación de usuarios
-// Las sesiones se usan para mantener el estado de login del administrador
+// Configuración segura de sesiones
+ini_set('session.cookie_httponly', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.cookie_samesite', 'Strict');
+if (Env::get('SESSION_SECURE', '0') === '1') {
+    ini_set('session.cookie_secure', '1');
+}
+ini_set('session.gc_maxlifetime', Env::get('SESSION_LIFETIME', '7200'));
+
+// Iniciar sesión
 session_start();
 
 // Obtener la URI y el método de la solicitud HTTP

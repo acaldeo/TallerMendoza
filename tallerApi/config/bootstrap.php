@@ -20,26 +20,26 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\DBAL\DriverManager;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use App\Utils\Env;
+
+// Cargar variables de entorno
+Env::load(__DIR__ . '/..');
 
 // Configurar metadatos utilizando Atributos de PHP
-// - paths: directorio donde se ubican las entidades (clases que representan tablas)
-// - isDevMode: modo desarrollo (true = sin caché de producción, útil para desarrollo)
-// - cache: sistema de caché para metadatos (ArrayAdapter es para desarrollo, en producción usar otro como Redis)
 $config = ORMSetup::createAttributeMetadataConfiguration(
     paths: [__DIR__ . '/../src/Entities'],
-    isDevMode: true,
+    isDevMode: Env::get('APP_ENV', 'development') === 'development',
     cache: new ArrayAdapter()
 );
 
-// Parámetros de conexión a la base de datos MySQL
-// Estos parámetros definen cómo conectarse al servidor de base de datos
+// Parámetros de conexión desde variables de entorno
 $connectionParams = [
-    'dbname' => 'taller_turnos',    // Nombre de la base de datos
-    'user' => 'root',               // Usuario de MySQL
-    'password' => 'Matute@2025',    // Contraseña de MySQL
-    'host' => 'localhost',          // Servidor de base de datos
-    'driver' => 'pdo_mysql',        // Driver PDO para MySQL
-    'charset' => 'utf8mb4',         // Codificación de caracteres (soporta emojis y caracteres especiales)
+    'dbname' => Env::get('DB_NAME', 'taller_turnos'),
+    'user' => Env::get('DB_USER', 'root'),
+    'password' => Env::get('DB_PASSWORD', ''),
+    'host' => Env::get('DB_HOST', 'localhost'),
+    'driver' => 'pdo_mysql',
+    'charset' => 'utf8mb4',
 ];
 
 // Crear la conexión a la base de datos
