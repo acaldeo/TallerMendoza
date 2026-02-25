@@ -45,6 +45,13 @@ class Taller
     private string $nombre;
 
     /**
+     * La ciudad donde se encuentra el taller.
+     * Permite distinguir talleres con el mismo nombre en diferentes ubicaciones.
+     */
+    #[ORM\Column(type: 'string', length: 100)]
+    private string $ciudad;
+
+    /**
      * La capacidad máxima del taller.
      * Por defecto 3 si no se especifica.
      */
@@ -111,6 +118,28 @@ class Taller
     public function setNombre(string $nombre): self
     {
         $this->nombre = $nombre;
+        return $this;
+    }
+
+    /**
+     * Obtiene la ciudad del taller.
+     *
+     * @return string La ciudad del taller.
+     */
+    public function getCiudad(): string
+    {
+        return $this->ciudad;
+    }
+
+    /**
+     * Establece la ciudad del taller.
+     *
+     * @param string $ciudad La ciudad del taller.
+     * @return self Retorna la instancia para encadenamiento de métodos.
+     */
+    public function setCiudad(string $ciudad): self
+    {
+        $this->ciudad = $ciudad;
         return $this;
     }
 

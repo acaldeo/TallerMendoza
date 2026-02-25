@@ -75,6 +75,7 @@ createApp({
         // Reactive form data for creating new taller
         const tallerForm = reactive({
             nombre: '',
+            ciudad: '',
             capacidad: 3
         });
 
@@ -394,6 +395,7 @@ createApp({
 
                 // Clear form and hide it
                 tallerForm.nombre = '';
+                tallerForm.ciudad = '';
                 tallerForm.capacidad = 3;
                 showTallerForm.value = false;
 
@@ -419,6 +421,7 @@ createApp({
             Object.keys(userForm).forEach(key => userForm[key] = '');
             passwordForm.password = '';
             tallerForm.nombre = '';
+            tallerForm.ciudad = '';
             tallerForm.capacidad = 3;
             error.value = null;
             errorEmail.value = null;

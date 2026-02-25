@@ -56,6 +56,10 @@
                                             <input v-model="tallerForm.nombre" type="text" class="form-control" required>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Ciudad</label>
+                                            <input v-model="tallerForm.ciudad" type="text" class="form-control" required placeholder="Ej: Mendoza">
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Capacidad</label>
                                             <input v-model="tallerForm.capacidad" type="number" class="form-control" min="1" required>
                                         </div>
@@ -160,6 +164,7 @@
 
                 const tallerForm = reactive({
                     nombre: '',
+                    ciudad: '',
                     capacidad: 3,
                     usuario: '',
                     password: ''
@@ -190,6 +195,7 @@
                         await api.crearTaller(tallerForm);
                         successMessage.value = 'Taller y usuario administrador creados correctamente';
                         tallerForm.nombre = '';
+                        tallerForm.ciudad = '';
                         tallerForm.capacidad = 3;
                         tallerForm.usuario = '';
                         tallerForm.password = '';

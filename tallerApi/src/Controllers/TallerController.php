@@ -164,6 +164,7 @@ class TallerController
                 return [
                     'id' => $taller->getId(),
                     'nombre' => $taller->getNombre(),
+                    'ciudad' => $taller->getCiudad(),
                     'capacidad' => $taller->getCapacidad(),
                     'logo' => $taller->getLogo(),
                     'logoUrl' => $logoUrl

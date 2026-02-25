@@ -471,8 +471,8 @@ class AdminController
             }
 
             // Validar entrada
-            if (empty($input['nombre']) || !isset($input['capacidad'])) {
-                ApiResponse::error('Nombre y capacidad son requeridos', 400);
+            if (empty($input['nombre']) || !isset($input['capacidad']) || empty($input['ciudad'])) {
+                ApiResponse::error('Nombre, ciudad y capacidad son requeridos', 400);
                 return;
             }
 
@@ -491,6 +491,7 @@ class AdminController
             // Crear entidad taller
             $taller = new \App\Entities\Taller();
             $taller->setNombre($input['nombre'])
+                   ->setCiudad($input['ciudad'])
                    ->setCapacidad((int)$input['capacidad']);
 
             // Persistir el taller

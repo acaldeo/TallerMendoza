@@ -66,6 +66,7 @@ POST /api/v1/admin/turno/{id}/finalizar
 ## Reglas de Negocio
 
 - **Multi-taller:** Cada taller maneja sus turnos independientemente
+- **Identificación:** Talleres identificados por nombre y ciudad para distinguir ubicaciones
 - **Capacidad:** Configurable por taller (default: 3)
 - **Estados:** EN_ESPERA → EN_TALLER → FINALIZADO
 - **Promoción automática:** Al finalizar un turno, el siguiente en espera pasa a EN_TALLER
