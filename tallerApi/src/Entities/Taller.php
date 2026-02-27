@@ -45,11 +45,12 @@ class Taller
     private string $nombre;
 
     /**
-     * La ciudad donde se encuentra el taller.
-     * Permite distinguir talleres con el mismo nombre en diferentes ubicaciones.
+     * La localidad donde se encuentra el taller.
+     * Relación muchos-a-uno con Localidad.
      */
-    #[ORM\Column(type: 'string', length: 100)]
-    private string $ciudad;
+    #[ORM\ManyToOne(targetEntity: Localidad::class, inversedBy: 'talleres')]
+    #[ORM\JoinColumn(name: 'localidad_id', referencedColumnName: 'id', nullable: false)]
+    private Localidad $localidad;
 
     /**
      * La capacidad máxima del taller.
@@ -64,6 +65,12 @@ class Taller
      */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $logo = null;
+
+    /**
+     * Dirección física del taller.
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $direccion = null;
 
     /**
      * Colección de turnos (Turno) asociados con este taller.
@@ -122,24 +129,24 @@ class Taller
     }
 
     /**
-     * Obtiene la ciudad del taller.
+     * Obtiene la localidad del taller.
      *
-     * @return string La ciudad del taller.
+     * @return Localidad La localidad del taller.
      */
-    public function getCiudad(): string
+    public function getLocalidad(): Localidad
     {
-        return $this->ciudad;
+        return $this->localidad;
     }
 
     /**
-     * Establece la ciudad del taller.
+     * Establece la localidad del taller.
      *
-     * @param string $ciudad La ciudad del taller.
+     * @param Localidad $localidad La localidad del taller.
      * @return self Retorna la instancia para encadenamiento de métodos.
      */
-    public function setCiudad(string $ciudad): self
+    public function setLocalidad(Localidad $localidad): self
     {
-        $this->ciudad = $ciudad;
+        $this->localidad = $localidad;
         return $this;
     }
 
@@ -205,5 +212,27 @@ class Taller
     public function getUsuarios(): Collection
     {
         return $this->usuarios;
+    }
+
+    /**
+     * Obtiene la dirección del taller.
+     *
+     * @return string|null La dirección del taller o null si no tiene.
+     */
+    public function getDireccion(): ?string
+    {
+        return $this->direccion;
+    }
+
+    /**
+     * Establece la dirección del taller.
+     *
+     * @param string|null $direccion La dirección del taller.
+     * @return self Retorna la instancia para encadenamiento de métodos.
+     */
+    public function setDireccion(?string $direccion): self
+    {
+        $this->direccion = $direccion;
+        return $this;
     }
 }

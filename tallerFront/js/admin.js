@@ -30,6 +30,7 @@ createApp({
         const logoUrl = ref(null);
         const loadingLogo = ref(false);
         const errorLogo = ref('');
+        const direccionForm = ref('');
         // Reactive state for loading indicator
         const loading = ref(false);
         // Reactive state for email-specific loading indicator
@@ -499,6 +500,7 @@ createApp({
             try {
                 const data = await api.obtenerLogo(user.value.tallerId);
                 tallerLogo.value = data.logo;
+                direccionForm.value = data.direccion || '';
                 // Construir URL del logo
                 if (data.logo) {
                     logoUrl.value = `/taller/tallerApi/uploads/logos/${data.logo}`;
@@ -566,6 +568,21 @@ createApp({
             }
         };
 
+        const guardarDireccion = async () => {
+            try {
+                loadingLogo.value = true;
+                errorLogo.value = null;
+
+                await api.guardarDireccionTaller(user.value.tallerId, direccionForm.value);
+
+                showSuccess('Dirección guardada correctamente');
+            } catch (err) {
+                errorLogo.value = err.message;
+            } finally {
+                loadingLogo.value = false;
+            }
+        };
+
         // Watch for changes in filtroPatente to apply filters
         Vue.watch(filtroPatente, aplicarFiltros);
 
@@ -610,6 +627,7 @@ createApp({
             loadingTalleres,
             loadingLogo,
             errorLogo,
+            direccionForm,
             isLoggedIn,
             login,
             logout,
@@ -632,6 +650,7 @@ createApp({
             probarEmail,
             subirLogo,
             eliminarLogo,
+            guardarDireccion,
             getEstadoClass,
             getEstadoBadgeClass,
             puedeFinalizarTurno,

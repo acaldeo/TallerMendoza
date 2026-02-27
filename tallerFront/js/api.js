@@ -225,4 +225,12 @@ class ApiService {
             method: 'DELETE'
         });
     }
+
+    // Save direccion for a taller (admin - with auth)
+    async guardarDireccionTaller(tallerId, direccion) {
+        return this.request(`/api/v1/admin/taller/${tallerId}/direccion`, {
+            method: 'PUT',
+            body: JSON.stringify({ direccion })
+        });
+    }
 }

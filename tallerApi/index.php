@@ -214,6 +214,13 @@ try {
             $controller = new AdminController();
             $controller->eliminarLogo($tallerId);
         }
+    } elseif (preg_match('#^/api/v1/admin/taller/(\d+)/direccion$#', $path, $matches)) {
+        $tallerId = (int)$matches[1];
+        if ($requestMethod === 'PUT') {
+            AuthMiddleware::requireAuth();
+            $controller = new AdminController();
+            $controller->guardarDireccion($tallerId);
+        }
     } elseif (preg_match('#^/api/v1/taller/(\d+)/logo$#', $path, $matches)) {
         $tallerId = (int)$matches[1];
         if ($requestMethod === 'GET') {
@@ -258,6 +265,26 @@ try {
         // Listar todos los talleres disponibles (público)
         $controller = new TallerController();
         $controller->listarTalleres();
+    } elseif ($path === '/api/v1/provincias' && $requestMethod === 'GET') {
+        // Listar todas las provincias (público)
+        $em = $GLOBALS['entityManager'];
+        $provincias = $em->getRepository(App\Entities\Provincia::class)->findAll();
+        $result = array_map(fn($p) => ['id' => $p->getId(), 'nombre' => $p->getNombre()], $provincias);
+        ApiResponse::success($result);
+    } elseif (preg_match('#^/api/v1/provincias/(\d+)/localidades$#', $path, $matches)) {
+        $provinciaId = (int)$matches[1];
+        if ($requestMethod === 'GET') {
+            // Listar localidades de una provincia (público)
+            $em = $GLOBALS['entityManager'];
+            $provincia = $em->find(App\Entities\Provincia::class, $provinciaId);
+            if (!$provincia) {
+                ApiResponse::error('Provincia no encontrada', 404);
+            } else {
+                $localidades = $provincia->getLocalidades()->toArray();
+                $result = array_map(fn($l) => ['id' => $l->getId(), 'nombre' => $l->getNombre()], $localidades);
+                ApiResponse::success($result);
+            }
+        }
     } else {
         // Endpoint no encontrado
         // Si ninguna ruta coincide, devolver error 404

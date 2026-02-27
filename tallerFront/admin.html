@@ -388,6 +388,35 @@
                             <button type="button" class="btn-close" @click="errorLogo = ''"></button>
                         </div>
 
+                        <!-- Dirección del Taller -->
+                        <div class="mb-4">
+                            <h6>Dirección del Taller</h6>
+                            <form @submit.prevent="guardarDireccion" class="mb-3">
+                                <div class="mb-3">
+                                    <label for="direccionInput" class="form-label">Dirección</label>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="direccionInput" 
+                                        v-model="direccionForm"
+                                        :disabled="loadingLogo"
+                                        placeholder="Ej: Av. San Martín 1234, Mendoza"
+                                    >
+                                </div>
+                                <button 
+                                    type="submit" 
+                                    class="btn btn-primary"
+                                    :disabled="loadingLogo"
+                                >
+                                    <span v-if="loadingLogo" class="loading-spinner me-2"></span>
+                                    <i v-else class="bi bi-save"></i>
+                                    Guardar Dirección
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr>
+
                         <!-- Vista previa del logo -->
                         <div class="text-center mb-4">
                             <div v-if="logoUrl" class="mb-3">

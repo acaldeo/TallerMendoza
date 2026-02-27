@@ -161,10 +161,13 @@ class TallerController
                     $baseUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'];
                     $logoUrl = $baseUrl . '/taller/tallerApi/uploads/logos/' . $taller->getLogo();
                 }
+                $localidad = $taller->getLocalidad();
                 return [
                     'id' => $taller->getId(),
                     'nombre' => $taller->getNombre(),
-                    'ciudad' => $taller->getCiudad(),
+                    'localidad' => $localidad->getNombre(),
+                    'provincia' => $localidad->getProvincia()->getNombre(),
+                    'localidadId' => $localidad->getId(),
                     'capacidad' => $taller->getCapacidad(),
                     'logo' => $taller->getLogo(),
                     'logoUrl' => $logoUrl

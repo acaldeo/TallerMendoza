@@ -1,0 +1,8 @@
+# Redirección de URLs antiguas mendoza -> tallerFront
+# Mantiene compatibilidad con enlaces y favoritos existentes
+
+RewriteEngine On
+RewriteBase /taller/
+
+# Redireccionar /mendoza/ a /tallerFront/
+RewriteRule ^mendoza/(.*)$ tallerFront/$1 [R=301,L]

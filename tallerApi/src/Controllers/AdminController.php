@@ -471,8 +471,8 @@ class AdminController
             }
 
             // Validar entrada
-            if (empty($input['nombre']) || !isset($input['capacidad']) || empty($input['ciudad'])) {
-                ApiResponse::error('Nombre, ciudad y capacidad son requeridos', 400);
+            if (empty($input['nombre']) || !isset($input['capacidad']) || !isset($input['localidadId'])) {
+                ApiResponse::error('Nombre, localidad y capacidad son requeridos', 400);
                 return;
             }
 
@@ -488,10 +488,17 @@ class AdminController
                 return;
             }
 
+            // Buscar localidad
+            $localidad = $em->find(\App\Entities\Localidad::class, (int)$input['localidadId']);
+            if (!$localidad) {
+                ApiResponse::error('Localidad no encontrada', 404);
+                return;
+            }
+
             // Crear entidad taller
             $taller = new \App\Entities\Taller();
             $taller->setNombre($input['nombre'])
-                   ->setCiudad($input['ciudad'])
+                   ->setLocalidad($localidad)
                    ->setCapacidad((int)$input['capacidad']);
 
             // Persistir el taller
@@ -908,8 +915,34 @@ class AdminController
             }
 
             ApiResponse::success([
-                'logo' => $taller->getLogo()
+                'logo' => $taller->getLogo(),
+                'direccion' => $taller->getDireccion()
             ]);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function guardarDireccion(int $tallerId): void
+    {
+        try {
+            AuthMiddleware::requireTallerAccess($tallerId);
+
+            $em = $GLOBALS['entityManager'];
+            $taller = $em->find(Taller::class, $tallerId);
+
+            if (!$taller) {
+                ApiResponse::error('Taller no encontrado', 404);
+                return;
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $direccion = $input['direccion'] ?? null;
+
+            $taller->setDireccion($direccion);
+            $em->flush();
+
+            ApiResponse::success(['direccion' => $taller->getDireccion()]);
         } catch (Exception $e) {
             throw $e;
         }
