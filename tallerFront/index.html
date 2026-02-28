@@ -99,6 +99,16 @@
                                     style="height: 80px; object-fit: contain;"
                                 >
                                 <h2 class="card-title">{{ tallerSeleccionado?.nombre }}</h2>
+                                <p v-if="tallerSeleccionado?.direccion" class="text-muted mb-2">
+                                    <a 
+                                        :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(tallerSeleccionado.direccion)"
+                                        target="_blank"
+                                        class="text-decoration-none text-primary"
+                                    >
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        {{ tallerSeleccionado.direccion }}
+                                    </a>
+                                </p>
                                 <p class="card-text text-muted">
                                     Capacidad: {{ tallerSeleccionado?.capacidad }} turnos simultáneos
                                 </p>
@@ -396,7 +406,7 @@
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" crossorigin="anonymous">
 
     <!-- API Service -->
-    <script src="js/api.js"></script>
+    <script src="js/api.js?v=2"></script>
     
     <!-- Vue App -->
     <script src="js/cliente.js"></script>

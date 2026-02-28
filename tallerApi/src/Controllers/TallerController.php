@@ -138,7 +138,8 @@ class TallerController
 
             ApiResponse::success([
                 'logo' => $logo,
-                'logoUrl' => $logoUrl
+                'logoUrl' => $logoUrl,
+                'direccion' => $taller->getDireccion()
             ]);
         } catch (Exception $e) {
             throw $e;
@@ -170,7 +171,8 @@ class TallerController
                     'localidadId' => $localidad->getId(),
                     'capacidad' => $taller->getCapacidad(),
                     'logo' => $taller->getLogo(),
-                    'logoUrl' => $logoUrl
+                    'logoUrl' => $logoUrl,
+                    'direccion' => $taller->getDireccion()
                 ];
             }, $talleres);
 
